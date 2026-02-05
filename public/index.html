@@ -6,86 +6,115 @@
     <title>OpenPix | O Segredo do Cofre</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Ajustes finos que o Tailwind padrão não cobre */
         body {
-            /* ATUALIZADO: Agora busca o arquivo .jpg */
+            /* Garante que pegue a imagem correta */
             background-image: url('fundo-cofre.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             background-attachment: fixed;
         }
-        /* Efeito de vidro fosco para o painel central */
+        
+        /* Painel de Vidro */
         .glass-panel {
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            background: rgba(11, 15, 25, 0.85); /* Fundo um pouco mais escuro para contraste */
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8); /* Sombra mais forte */
         }
+
         .input-display {
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid rgba(234, 179, 8, 0.6);
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(234, 179, 8, 0.3);
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.9);
+        }
+
+        /* Efeito NEON para o prêmio */
+        .neon-text {
+            text-shadow: 0 0 10px rgba(74, 222, 128, 0.5), 
+                         0 0 20px rgba(74, 222, 128, 0.3), 
+                         0 0 30px rgba(74, 222, 128, 0.1);
         }
     </style>
 </head>
-<body class="text-white flex flex-col items-center justify-center min-h-screen p-4 sm:p-8">
+<body class="text-white flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden">
 
-    <div class="fixed inset-0 bg-black/40 z-[-1]"></div>
+    <div class="fixed inset-0 bg-black/50 z-[-1]"></div>
 
-    <main class="glass-panel p-6 sm:p-8 rounded-3xl w-full max-w-sm sm:max-w-md text-center relative overflow-hidden mx-auto">
+    <main class="glass-panel p-6 sm:p-10 rounded-3xl w-full max-w-md text-center relative overflow-hidden mx-auto border-t border-white/10">
         
-        <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent"></div>
+        <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
 
-        <header class="mb-6 sm:mb-8">
-            <h1 class="text-4xl sm:text-5xl font-black tracking-tighter mb-2">
-                <span class="text-yellow-500 drop-shadow-sm">OPEN</span><span class="text-white drop-shadow-sm">PIX</span>
+        <header class="mb-8">
+            <h1 class="text-5xl font-black tracking-tighter mb-1">
+                <span class="text-yellow-500 drop-shadow-md">OPEN</span><span class="text-white drop-shadow-md">PIX</span>
             </h1>
-            <p class="text-slate-300 text-xs sm:text-sm font-medium">Descubra a senha e leve o prêmio instantâneo.</p>
+            <p class="text-slate-400 text-xs font-bold tracking-widest uppercase">Sistema de Segurança Ativo</p>
         </header>
 
-        <div class="mb-6 sm:mb-8">
-            <span class="text-[0.65rem] sm:text-xs uppercase tracking-[0.2em] text-slate-400 font-bold">Prêmio Acumulado</span>
-            <div class="text-4xl sm:text-5xl font-mono font-black text-green-400 mt-2 drop-shadow-lg">
+        <div class="mb-10 relative">
+            <div class="absolute inset-0 bg-green-500/10 blur-3xl rounded-full z-0"></div> <span class="relative z-10 text-[0.7rem] uppercase tracking-[0.3em] text-slate-300 font-bold border border-slate-600/50 px-3 py-1 rounded-full bg-black/40">Prêmio Disponível</span>
+            
+            <div class="relative z-10 text-6xl sm:text-7xl font-mono font-black text-green-400 mt-4 neon-text tracking-tighter transition-all hover:scale-105 duration-300 cursor-default">
                 R$ <span id="premio">500,30</span>
             </div>
         </div>
 
-        <div class="input-display p-3 sm:p-4 rounded-xl mb-6 sm:mb-8 shadow-inner relative">
-             <div class="absolute inset-0 bg-green-500/10 rounded-xl pointer-events-none z-0"></div>
+        <div class="input-display p-4 rounded-2xl mb-8 relative group hover:border-yellow-500/50 transition-colors">
             <input type="password" id="senha" maxlength="4" placeholder="----" 
-                   class="bg-transparent relative z-10 text-center text-4xl sm:text-5xl font-mono font-bold tracking-[0.8rem] sm:tracking-[1rem] outline-none w-full text-green-400 placeholder-green-700/50 focus:placeholder-transparent transition-all">
+                   class="bg-transparent text-center text-5xl font-mono font-bold tracking-[1rem] outline-none w-full text-white placeholder-slate-700 focus:placeholder-transparent transition-all">
         </div>
 
-        <button onclick="fazerPagamento()" 
-                class="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-slate-900 font-black text-base sm:text-lg py-3 sm:py-4 rounded-xl transition-all transform hover:scale-[1.02] shadow-lg shadow-yellow-500/25 active:scale-95">
-            TENTAR POR R$ 1,00
+        <button onclick="tentarAbrir()" 
+                class="w-full bg-gradient-to-b from-yellow-400 to-yellow-600 hover:from-yellow-300 hover:to-yellow-500 text-black font-black text-2xl py-5 rounded-2xl transition-all transform hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(234,179,8,0.4)] active:scale-95 border-b-4 border-yellow-700 active:border-b-0 active:translate-y-1 relative overflow-hidden group">
+            
+            <div class="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[-20deg] group-hover:animate-[shimmer_1s_infinite]"></div>
+            
+            ABRIR AGORA
         </button>
 
-        <footer class="mt-6 sm:mt-8 text-slate-400 text-[0.65rem] sm:text-xs font-medium">
-            <p>© 2026 OpenPix – Sistema Seguro via PIX</p>
+        <footer class="mt-8 text-slate-500 text-[0.6rem] uppercase tracking-widest">
+            <p>Conexão Segura SSL • © 2026 OpenPix</p>
         </footer>
     </main>
 
     <script>
+        // Configuração inicial do valor
         document.getElementById('premio').innerText = (500.30).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 
-        function fazerPagamento() {
-            alert("Simulação: Redirecionando para pagamento PIX...");
-            setTimeout(() => {
-                enviarTentativa();
-            }, 1500); 
-        }
+        // Adicionei keyframes para o brilho do botão via JS para não poluir o CSS
+        const styleSheet = document.createElement("style");
+        styleSheet.innerText = `
+            @keyframes shimmer {
+                0% { left: -100%; }
+                100% { left: 200%; }
+            }
+        `;
+        document.head.appendChild(styleSheet);
 
-        async function enviarTentativa() {
+        function tentarAbrir() {
+            // Lógica simples por enquanto, sem o pagamento
             const senhaInput = document.getElementById('senha');
             const senha = senhaInput.value;
 
             if (senha.length !== 4) {
-                alert("Digite uma senha de 4 dígitos.");
+                alert("🔒 DIGITE A SENHA DE 4 DÍGITOS PARA ABRIR.");
+                // Efeito visual de erro (tremer)
+                senhaInput.parentElement.classList.add('animate-pulse', 'border-red-500');
+                setTimeout(() => senhaInput.parentElement.classList.remove('animate-pulse', 'border-red-500'), 500);
                 return;
             }
 
+            // Simula verificação
+            alert("⚙️ VERIFICANDO SENHA...");
+            setTimeout(() => {
+                enviarTentativa();
+            }, 1000);
+        }
+
+        async function enviarTentativa() {
+            const senha = document.getElementById('senha').value;
             try {
                 const res = await fetch('/tentar', {
                     method: 'POST',
@@ -95,17 +124,16 @@
                 const data = await res.json();
                 
                 if (data.ganhou) {
-                    alert(`PARABÉNS! VOCÊ GANHOU R$ ${data.premio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}! O cofre foi aberto.`);
-                    senhaInput.value = "";
+                    alert(`💰 PARABÉNS! O COFRE ABRIU!\nVocê ganhou R$ ${data.premio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
                     location.reload();
                 } else {
-                    alert(data.msg);
-                    senhaInput.value = "";
+                    alert("❌ SENHA INCORRETA.\nO prêmio acumulou!");
+                    document.getElementById('senha').value = "";
                     document.getElementById('premio').innerText = data.novoPremio.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
                 }
             } catch (error) {
-                console.error("Erro na requisição", error);
-                alert("Simulação (Offline): O servidor não respondeu. Em produção, isso funcionará.");
+                console.error("Erro offline:", error);
+                alert("Erro de conexão com o servidor.");
             }
         }
     </script>

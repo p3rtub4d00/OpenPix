@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OpenPix | O Segredo do Cofre</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <style>
         body {
             background-image: url('fundo-cofre.jpg');
@@ -33,32 +34,24 @@
                          0 0 20px rgba(74, 222, 128, 0.3);
         }
 
-        /* Estilo do Terminal de Logs */
+        /* Terminal Style */
         .terminal-log {
             font-family: 'Courier New', Courier, monospace;
             font-size: 0.8rem;
             text-align: left;
             padding: 10px;
             color: #00ff00;
-            min-height: 80px; /* Garante espaço fixo */
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            opacity: 0; /* Começa invisível */
-            transition: opacity 0.3s;
+            min-height: 80px; 
+            display: flex; flex-direction: column; justify-content: flex-end;
+            opacity: 0; transition: opacity 0.3s;
         }
-        
-        .log-line {
-            margin-bottom: 2px;
-            overflow: hidden;
-            white-space: nowrap;
-            animation: typing 0.5s steps(40, end);
-        }
+        .log-line { margin-bottom: 2px; overflow: hidden; white-space: nowrap; animation: typing 0.5s steps(40, end); }
+        @keyframes typing { from { width: 0 } to { width: 100% } }
 
-        /* Animação de digitação */
-        @keyframes typing {
-            from { width: 0 }
-            to { width: 100% }
+        /* Modal Backdrop */
+        .modal-backdrop {
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
         }
     </style>
 </head>
@@ -66,8 +59,14 @@
 
     <div class="fixed inset-0 bg-black/60 z-[-1]"></div>
 
+    <div class="absolute top-4 right-4 z-50">
+        <button onclick="abrirHistorico()" class="bg-white/10 hover:bg-white/20 border border-white/20 text-xs text-white px-4 py-2 rounded-full transition-all flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            MEUS PALPITES
+        </button>
+    </div>
+
     <main class="glass-panel p-6 sm:p-8 rounded-3xl w-full max-w-md text-center relative overflow-hidden mx-auto border-t border-white/10">
-        
         <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
 
         <header class="mb-6">
@@ -90,10 +89,9 @@
                    class="bg-transparent text-center text-5xl font-mono font-bold tracking-[1rem] outline-none w-full text-white placeholder-slate-800 focus:placeholder-transparent transition-all">
         </div>
 
-        <div id="terminal" class="terminal-log bg-black/50 rounded-lg mb-4 border border-green-900/30 hidden">
-            </div>
+        <div id="terminal" class="terminal-log bg-black/50 rounded-lg mb-4 border border-green-900/30 hidden"></div>
 
-        <button id="btn-acao" onclick="iniciarHack()" 
+        <button id="btn-acao" onclick="verificarLogin()" 
                 class="w-full bg-gradient-to-b from-yellow-400 to-yellow-600 hover:from-yellow-300 hover:to-yellow-500 text-black font-black text-xl py-4 rounded-xl transition-all transform hover:scale-[1.01] active:scale-95 border-b-4 border-yellow-800 active:border-b-0 active:translate-y-1 relative overflow-hidden group">
             <div class="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[-20deg] group-hover:animate-[shimmer_1s_infinite]"></div>
             <span id="btn-texto">ABRIR AGORA</span>
@@ -104,10 +102,56 @@
         </footer>
     </main>
 
+    <div id="modal-cadastro" class="fixed inset-0 modal-backdrop z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 p-8 rounded-2xl w-full max-w-sm relative shadow-2xl">
+            <button onclick="fecharModal('modal-cadastro')" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
+            
+            <h3 class="text-xl font-bold text-yellow-500 mb-2">IDENTIFICAÇÃO</h3>
+            <p class="text-slate-400 text-xs mb-6">Identifique-se para validar sua tentativa e receber o prêmio via PIX caso acerte a senha.</p>
+            
+            <form id="form-cadastro" onsubmit="salvarCadastro(event)">
+                <div class="mb-4 text-left">
+                    <label class="text-xs text-slate-500 font-bold ml-1">NOME COMPLETO</label>
+                    <input type="text" id="input-nome" required class="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white outline-none focus:border-yellow-500">
+                </div>
+                <div class="mb-4 text-left">
+                    <label class="text-xs text-slate-500 font-bold ml-1">WHATSAPP</label>
+                    <input type="tel" id="input-tel" required class="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white outline-none focus:border-yellow-500" placeholder="(11) 99999-9999">
+                </div>
+                <div class="mb-6 text-left">
+                    <label class="text-xs text-slate-500 font-bold ml-1">CPF (Chave Pix)</label>
+                    <input type="text" id="input-cpf" required class="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white outline-none focus:border-yellow-500" placeholder="000.000.000-00">
+                </div>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl transition-all">CONFIRMAR IDENTIDADE</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-historico" class="fixed inset-0 modal-backdrop z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 p-6 rounded-2xl w-full max-w-sm relative shadow-2xl h-[400px] flex flex-col">
+            <button onclick="fecharModal('modal-historico')" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
+            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <span class="text-yellow-500">📂</span> MEUS PALPITES
+            </h3>
+            
+            <div id="lista-historico" class="flex-1 overflow-y-auto space-y-2 pr-2">
+                <div class="text-center text-slate-500 text-sm mt-10">Nenhum palpite registrado ainda.</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <script>
+        // Configuração inicial
         document.getElementById('premio').innerText = (500.30).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
         
-        // Adiciona keyframes dinamicamente
+        // Máscaras de Input (JQuery Mask)
+        $(document).ready(function(){
+            $('#input-tel').mask('(00) 00000-0000');
+            $('#input-cpf').mask('000.000.000-00');
+        });
+
         const styleSheet = document.createElement("style");
         styleSheet.innerText = `
             @keyframes shimmer { 0% { left: -100%; } 100% { left: 200%; } }
@@ -116,12 +160,77 @@
         `;
         document.head.appendChild(styleSheet);
 
+        // --- SISTEMA DE DADOS DO USUÁRIO ---
+        let usuario = JSON.parse(localStorage.getItem('openpix_user')) || null;
+        let historico = JSON.parse(localStorage.getItem('openpix_history')) || [];
+
+        function verificarLogin() {
+            const senhaInput = document.getElementById('senha');
+            
+            if (senhaInput.value.length !== 4) {
+                senhaInput.parentElement.style.borderColor = "red";
+                setTimeout(() => senhaInput.parentElement.style.borderColor = "rgba(234, 179, 8, 0.3)", 500);
+                return;
+            }
+
+            if (!usuario) {
+                // Se não tem cadastro, abre modal
+                document.getElementById('modal-cadastro').classList.remove('hidden');
+            } else {
+                // Se já tem cadastro, prossegue
+                iniciarHack();
+            }
+        }
+
+        function salvarCadastro(e) {
+            e.preventDefault();
+            const nome = document.getElementById('input-nome').value;
+            const tel = document.getElementById('input-tel').value;
+            const cpf = document.getElementById('input-cpf').value;
+
+            usuario = { nome, tel, cpf };
+            localStorage.setItem('openpix_user', JSON.stringify(usuario));
+            
+            fecharModal('modal-cadastro');
+            alert(`Bem-vindo, ${nome.split(' ')[0]}! Identidade validada.`);
+            iniciarHack(); // Começa o jogo automaticamente
+        }
+
+        function abrirHistorico() {
+            const lista = document.getElementById('lista-historico');
+            lista.innerHTML = "";
+
+            if (historico.length === 0) {
+                lista.innerHTML = '<div class="text-center text-slate-500 text-sm mt-10">Nenhum palpite registrado ainda.</div>';
+            } else {
+                // Mostra do mais recente pro mais antigo
+                historico.slice().reverse().forEach(item => {
+                    const statusClass = item.ganhou ? 'text-green-400' : 'text-red-400';
+                    const statusText = item.ganhou ? 'ABERTO' : 'FALHA';
+                    
+                    lista.innerHTML += `
+                        <div class="bg-slate-800 p-3 rounded-lg border border-slate-700 flex justify-between items-center">
+                            <div>
+                                <div class="text-xs text-slate-400">${item.data}</div>
+                                <div class="font-mono text-lg font-bold text-white tracking-widest">${item.senha}</div>
+                            </div>
+                            <div class="text-xs font-bold ${statusClass}">${statusText}</div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('modal-historico').classList.remove('hidden');
+        }
+
+        function fecharModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // --- LÓGICA DO JOGO (TERMINAL) ---
         const terminal = document.getElementById('terminal');
         const btnAcao = document.getElementById('btn-acao');
         const btnTexto = document.getElementById('btn-texto');
         const senhaInput = document.getElementById('senha');
-
-        // Função auxiliar para esperar tempo (delay)
         const delay = ms => new Promise(res => setTimeout(res, ms));
 
         async function adicionarLog(msg, cor = "#4ade80") {
@@ -130,88 +239,73 @@
             linha.style.color = cor;
             linha.innerText = "> " + msg;
             terminal.appendChild(linha);
-            // Mantém o scroll no final
             terminal.scrollTop = terminal.scrollHeight;
         }
 
         async function iniciarHack() {
-            const senha = senhaInput.value;
+            // Salva o palpite no histórico antes de enviar
+            const senhaTentativa = senhaInput.value;
             
-            if (senha.length !== 4) {
-                // Efeito visual simples se não tiver senha
-                senhaInput.parentElement.style.borderColor = "red";
-                setTimeout(() => senhaInput.parentElement.style.borderColor = "rgba(234, 179, 8, 0.3)", 500);
-                return;
-            }
-
-            // 1. Prepara a Interface
             btnAcao.disabled = true;
             btnTexto.innerText = "PROCESSANDO...";
             terminal.classList.remove('hidden');
             terminal.style.opacity = "1";
-            terminal.innerHTML = ""; // Limpa logs antigos
+            terminal.innerHTML = "";
             senhaInput.disabled = true;
 
-            // 2. Sequência de "Hacking" (O Teatro)
+            await adicionarLog(`Usuário: ${usuario.cpf}`); // Mostra que está usando os dados
+            await delay(500);
             await adicionarLog("Iniciando conexão segura...");
             await delay(800);
-            
             await adicionarLog("Acessando Banco de Dados Central...");
             await delay(1200);
-
-            await adicionarLog("Verificando software de segurança...");
+            await adicionarLog("Verificando criptografia...");
             await delay(1000);
+            await adicionarLog("Testando combinação: " + senhaTentativa + "...");
+            await delay(1500);
 
-            await adicionarLog("Validando integridade da hash...");
-            await delay(1500); // O momento de tensão maior
-
-            // 3. Verifica a senha no servidor real
             try {
                 const res = await fetch('/tentar', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ senha })
+                    body: JSON.stringify({ senha: senhaTentativa })
                 });
                 const data = await res.json();
 
+                // Registra no histórico
+                const registro = {
+                    senha: senhaTentativa,
+                    ganhou: data.ganhou,
+                    data: new Date().toLocaleString('pt-BR')
+                };
+                historico.push(registro);
+                localStorage.setItem('openpix_history', JSON.stringify(historico));
+
                 if (data.ganhou) {
-                    // --- VITÓRIA ---
-                    await adicionarLog("ACESSO CONCEDIDO!", "#fbbf24"); // Amarelo/Dourado
+                    await adicionarLog("ACESSO CONCEDIDO!", "#fbbf24");
                     await delay(500);
-                    await adicionarLog("LIBERANDO VALORES...", "#fbbf24");
-                    await delay(1000);
-                    
                     alert(`💰 COFRE ABERTO!\nVocê ganhou R$ ${data.premio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
                     location.reload();
                 } else {
-                    // --- DERROTA (O Loop que você pediu) ---
-                    await adicionarLog("ERRO: HASH INVÁLIDA.", "#ef4444"); // Vermelho
-                    document.body.classList.add('shake'); // Treme a tela
+                    await adicionarLog("ERRO: HASH INVÁLIDA.", "#ef4444");
+                    document.body.classList.add('shake');
                     await delay(800);
-                    
-                    await adicionarLog("Acesso negado pelo Firewall.", "#ef4444");
-                    await delay(1000);
-                    
-                    await adicionarLog("Desconectando sistema...", "#ef4444");
+                    await adicionarLog("Reconectando sistema...", "#ef4444");
                     await delay(1500);
 
-                    // Resetando o sistema para tentar de novo
                     document.body.classList.remove('shake');
                     terminal.style.opacity = "0";
                     setTimeout(() => terminal.classList.add('hidden'), 300);
-                    
                     senhaInput.value = "";
                     senhaInput.disabled = false;
                     senhaInput.focus();
                     btnAcao.disabled = false;
-                    btnTexto.innerText = "TENTAR NOVAMENTE"; // Muda o texto para incentivar
-                    
-                    // Atualiza o prêmio
+                    btnTexto.innerText = "TENTAR NOVAMENTE";
                     document.getElementById('premio').innerText = data.novoPremio.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
                 }
             } catch (error) {
                 console.error(error);
-                await adicionarLog("ERRO DE REDE. Tente novamente.", "red");
+                await adicionarLog("ERRO DE CONEXÃO", "red");
                 btnAcao.disabled = false;
             }
         }

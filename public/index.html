@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>OpenPix | O Segredo do Cofre</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-900 text-white flex flex-col items-center justify-center min-h-screen">
+
+    <header class="mb-8 text-center">
+        <h1 class="text-5xl font-bold text-yellow-500 tracking-tighter">OPEN<span class="text-white">PIX</span></h1>
+        <p class="text-slate-400">Descubra a senha e leve o prêmio instantaneamente.</p>
+    </header>
+
+    <main class="bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700 w-full max-w-md">
+        <div class="text-center mb-6">
+            <span class="text-sm uppercase tracking-widest text-slate-400">Prêmio Acumulado</span>
+            <div class="text-4xl font-mono font-bold text-green-400">R$ <span id="premio">500,30</span></div>
+        </div>
+
+        <div class="vault-container p-6 bg-slate-900 rounded-lg mb-6 border-2 border-yellow-600 shadow-inner text-center">
+            <input type="password" id="senha" maxlength="4" placeholder="0000" class="bg-transparent text-center text-4xl font-mono tracking-[1rem] outline-none w-full">
+        </div>
+
+        <button onclick="fazerPagamento()" class="w-full bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold py-4 rounded-xl transition-all transform hover:scale-105">
+            TENTAR POR R$ 1,00
+        </button>
+    </main>
+
+    <footer class="mt-8 text-slate-500 text-xs text-center">
+        <p>© 2026 OpenPix - Sistema Seguro via PIX</p>
+    </footer>
+
+    <script>
+        function fazerPagamento() {
+            // Aqui entraria a integração com a API de PIX (Mercado Pago, Efí, etc)
+            alert("Simulação: Pagamento via PIX aprovado!");
+            enviarTentativa();
+        }
+
+        async function enviarTentativa() {
+            const senha = document.getElementById('senha').value;
+            const res = await fetch('/tentar', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ senha })
+            });
+            const data = await res.json();
+            alert(data.ganhou ? "VOCÊ GANHOU!" : data.msg);
+        }
+    </script>
+</body>
+</html>

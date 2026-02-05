@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            /* Garante que pegue a imagem correta */
             background-image: url('fundo-cofre.jpg');
             background-size: cover;
             background-position: center;
@@ -15,106 +14,158 @@
             background-attachment: fixed;
         }
         
-        /* Painel de Vidro */
         .glass-panel {
-            background: rgba(11, 15, 25, 0.85); /* Fundo um pouco mais escuro para contraste */
+            background: rgba(11, 15, 25, 0.90);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8); /* Sombra mais forte */
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
         }
 
         .input-display {
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.95);
             border: 1px solid rgba(234, 179, 8, 0.3);
-            box-shadow: inset 0 0 15px rgba(0,0,0,0.9);
+            box-shadow: inset 0 0 20px rgba(0,0,0,1);
         }
 
-        /* Efeito NEON para o prêmio */
         .neon-text {
             text-shadow: 0 0 10px rgba(74, 222, 128, 0.5), 
-                         0 0 20px rgba(74, 222, 128, 0.3), 
-                         0 0 30px rgba(74, 222, 128, 0.1);
+                         0 0 20px rgba(74, 222, 128, 0.3);
+        }
+
+        /* Estilo do Terminal de Logs */
+        .terminal-log {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.8rem;
+            text-align: left;
+            padding: 10px;
+            color: #00ff00;
+            min-height: 80px; /* Garante espaço fixo */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            opacity: 0; /* Começa invisível */
+            transition: opacity 0.3s;
+        }
+        
+        .log-line {
+            margin-bottom: 2px;
+            overflow: hidden;
+            white-space: nowrap;
+            animation: typing 0.5s steps(40, end);
+        }
+
+        /* Animação de digitação */
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
         }
     </style>
 </head>
 <body class="text-white flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden">
 
-    <div class="fixed inset-0 bg-black/50 z-[-1]"></div>
+    <div class="fixed inset-0 bg-black/60 z-[-1]"></div>
 
-    <main class="glass-panel p-6 sm:p-10 rounded-3xl w-full max-w-md text-center relative overflow-hidden mx-auto border-t border-white/10">
+    <main class="glass-panel p-6 sm:p-8 rounded-3xl w-full max-w-md text-center relative overflow-hidden mx-auto border-t border-white/10">
         
         <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
 
-        <header class="mb-8">
+        <header class="mb-6">
             <h1 class="text-5xl font-black tracking-tighter mb-1">
                 <span class="text-yellow-500 drop-shadow-md">OPEN</span><span class="text-white drop-shadow-md">PIX</span>
             </h1>
-            <p class="text-slate-400 text-xs font-bold tracking-widest uppercase">Sistema de Segurança Ativo</p>
+            <p class="text-slate-400 text-[0.65rem] font-bold tracking-[0.3em] uppercase">Sistema de Segurança Ativo</p>
         </header>
 
-        <div class="mb-10 relative">
-            <div class="absolute inset-0 bg-green-500/10 blur-3xl rounded-full z-0"></div> <span class="relative z-10 text-[0.7rem] uppercase tracking-[0.3em] text-slate-300 font-bold border border-slate-600/50 px-3 py-1 rounded-full bg-black/40">Prêmio Disponível</span>
-            
-            <div class="relative z-10 text-6xl sm:text-7xl font-mono font-black text-green-400 mt-4 neon-text tracking-tighter transition-all hover:scale-105 duration-300 cursor-default">
+        <div class="mb-8 relative">
+            <div class="absolute inset-0 bg-green-500/5 blur-3xl rounded-full z-0"></div>
+            <span class="relative z-10 text-[0.6rem] uppercase tracking-[0.2em] text-slate-400 font-bold border border-slate-700/50 px-3 py-1 rounded-full bg-black/40">Prêmio Acumulado</span>
+            <div class="relative z-10 text-6xl font-mono font-black text-green-400 mt-3 neon-text tracking-tighter">
                 R$ <span id="premio">500,30</span>
             </div>
         </div>
 
-        <div class="input-display p-4 rounded-2xl mb-8 relative group hover:border-yellow-500/50 transition-colors">
+        <div class="input-display p-4 rounded-xl mb-4 relative">
             <input type="password" id="senha" maxlength="4" placeholder="----" 
-                   class="bg-transparent text-center text-5xl font-mono font-bold tracking-[1rem] outline-none w-full text-white placeholder-slate-700 focus:placeholder-transparent transition-all">
+                   class="bg-transparent text-center text-5xl font-mono font-bold tracking-[1rem] outline-none w-full text-white placeholder-slate-800 focus:placeholder-transparent transition-all">
         </div>
 
-        <button onclick="tentarAbrir()" 
-                class="w-full bg-gradient-to-b from-yellow-400 to-yellow-600 hover:from-yellow-300 hover:to-yellow-500 text-black font-black text-2xl py-5 rounded-2xl transition-all transform hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(234,179,8,0.4)] active:scale-95 border-b-4 border-yellow-700 active:border-b-0 active:translate-y-1 relative overflow-hidden group">
-            
+        <div id="terminal" class="terminal-log bg-black/50 rounded-lg mb-4 border border-green-900/30 hidden">
+            </div>
+
+        <button id="btn-acao" onclick="iniciarHack()" 
+                class="w-full bg-gradient-to-b from-yellow-400 to-yellow-600 hover:from-yellow-300 hover:to-yellow-500 text-black font-black text-xl py-4 rounded-xl transition-all transform hover:scale-[1.01] active:scale-95 border-b-4 border-yellow-800 active:border-b-0 active:translate-y-1 relative overflow-hidden group">
             <div class="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[-20deg] group-hover:animate-[shimmer_1s_infinite]"></div>
-            
-            ABRIR AGORA
+            <span id="btn-texto">ABRIR AGORA</span>
         </button>
 
-        <footer class="mt-8 text-slate-500 text-[0.6rem] uppercase tracking-widest">
-            <p>Conexão Segura SSL • © 2026 OpenPix</p>
+        <footer class="mt-6 text-slate-600 text-[0.5rem] uppercase tracking-widest">
+            <p>Conexão Criptografada SSL • © 2026 OpenPix</p>
         </footer>
     </main>
 
     <script>
-        // Configuração inicial do valor
         document.getElementById('premio').innerText = (500.30).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-
-        // Adicionei keyframes para o brilho do botão via JS para não poluir o CSS
+        
+        // Adiciona keyframes dinamicamente
         const styleSheet = document.createElement("style");
         styleSheet.innerText = `
-            @keyframes shimmer {
-                0% { left: -100%; }
-                100% { left: 200%; }
-            }
+            @keyframes shimmer { 0% { left: -100%; } 100% { left: 200%; } }
+            .shake { animation: shake 0.5s; }
+            @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
         `;
         document.head.appendChild(styleSheet);
 
-        function tentarAbrir() {
-            // Lógica simples por enquanto, sem o pagamento
-            const senhaInput = document.getElementById('senha');
-            const senha = senhaInput.value;
+        const terminal = document.getElementById('terminal');
+        const btnAcao = document.getElementById('btn-acao');
+        const btnTexto = document.getElementById('btn-texto');
+        const senhaInput = document.getElementById('senha');
 
+        // Função auxiliar para esperar tempo (delay)
+        const delay = ms => new Promise(res => setTimeout(res, ms));
+
+        async function adicionarLog(msg, cor = "#4ade80") {
+            const linha = document.createElement('div');
+            linha.className = 'log-line';
+            linha.style.color = cor;
+            linha.innerText = "> " + msg;
+            terminal.appendChild(linha);
+            // Mantém o scroll no final
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        async function iniciarHack() {
+            const senha = senhaInput.value;
+            
             if (senha.length !== 4) {
-                alert("🔒 DIGITE A SENHA DE 4 DÍGITOS PARA ABRIR.");
-                // Efeito visual de erro (tremer)
-                senhaInput.parentElement.classList.add('animate-pulse', 'border-red-500');
-                setTimeout(() => senhaInput.parentElement.classList.remove('animate-pulse', 'border-red-500'), 500);
+                // Efeito visual simples se não tiver senha
+                senhaInput.parentElement.style.borderColor = "red";
+                setTimeout(() => senhaInput.parentElement.style.borderColor = "rgba(234, 179, 8, 0.3)", 500);
                 return;
             }
 
-            // Simula verificação
-            alert("⚙️ VERIFICANDO SENHA...");
-            setTimeout(() => {
-                enviarTentativa();
-            }, 1000);
-        }
+            // 1. Prepara a Interface
+            btnAcao.disabled = true;
+            btnTexto.innerText = "PROCESSANDO...";
+            terminal.classList.remove('hidden');
+            terminal.style.opacity = "1";
+            terminal.innerHTML = ""; // Limpa logs antigos
+            senhaInput.disabled = true;
 
-        async function enviarTentativa() {
-            const senha = document.getElementById('senha').value;
+            // 2. Sequência de "Hacking" (O Teatro)
+            await adicionarLog("Iniciando conexão segura...");
+            await delay(800);
+            
+            await adicionarLog("Acessando Banco de Dados Central...");
+            await delay(1200);
+
+            await adicionarLog("Verificando software de segurança...");
+            await delay(1000);
+
+            await adicionarLog("Validando integridade da hash...");
+            await delay(1500); // O momento de tensão maior
+
+            // 3. Verifica a senha no servidor real
             try {
                 const res = await fetch('/tentar', {
                     method: 'POST',
@@ -122,18 +173,46 @@
                     body: JSON.stringify({ senha })
                 });
                 const data = await res.json();
-                
+
                 if (data.ganhou) {
-                    alert(`💰 PARABÉNS! O COFRE ABRIU!\nVocê ganhou R$ ${data.premio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+                    // --- VITÓRIA ---
+                    await adicionarLog("ACESSO CONCEDIDO!", "#fbbf24"); // Amarelo/Dourado
+                    await delay(500);
+                    await adicionarLog("LIBERANDO VALORES...", "#fbbf24");
+                    await delay(1000);
+                    
+                    alert(`💰 COFRE ABERTO!\nVocê ganhou R$ ${data.premio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
                     location.reload();
                 } else {
-                    alert("❌ SENHA INCORRETA.\nO prêmio acumulou!");
-                    document.getElementById('senha').value = "";
+                    // --- DERROTA (O Loop que você pediu) ---
+                    await adicionarLog("ERRO: HASH INVÁLIDA.", "#ef4444"); // Vermelho
+                    document.body.classList.add('shake'); // Treme a tela
+                    await delay(800);
+                    
+                    await adicionarLog("Acesso negado pelo Firewall.", "#ef4444");
+                    await delay(1000);
+                    
+                    await adicionarLog("Desconectando sistema...", "#ef4444");
+                    await delay(1500);
+
+                    // Resetando o sistema para tentar de novo
+                    document.body.classList.remove('shake');
+                    terminal.style.opacity = "0";
+                    setTimeout(() => terminal.classList.add('hidden'), 300);
+                    
+                    senhaInput.value = "";
+                    senhaInput.disabled = false;
+                    senhaInput.focus();
+                    btnAcao.disabled = false;
+                    btnTexto.innerText = "TENTAR NOVAMENTE"; // Muda o texto para incentivar
+                    
+                    // Atualiza o prêmio
                     document.getElementById('premio').innerText = data.novoPremio.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
                 }
             } catch (error) {
-                console.error("Erro offline:", error);
-                alert("Erro de conexão com o servidor.");
+                console.error(error);
+                await adicionarLog("ERRO DE REDE. Tente novamente.", "red");
+                btnAcao.disabled = false;
             }
         }
     </script>

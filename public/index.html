@@ -8,24 +8,24 @@
     <style>
         /* Ajustes finos que o Tailwind padrão não cobre */
         body {
-            /* Define a nova imagem realista do cofre em 4K como fundo */
-            background-image: url('fundo-cofre-4k.png');
+            /* ATUALIZADO: Agora busca o arquivo .jpg */
+            background-image: url('fundo-cofre.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            background-attachment: fixed; /* O fundo fica fixo ao rolar */
+            background-attachment: fixed;
         }
         /* Efeito de vidro fosco para o painel central */
         .glass-panel {
-            background: rgba(15, 23, 42, 0.75); /* Azul escuro com boa transparência */
-            backdrop-filter: blur(12px); /* Desfoque do fundo mais forte */
-            -webkit-backdrop-filter: blur(12px); /* Para Safari */
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); /* Sombra mais marcada */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
         .input-display {
-            background: rgba(0, 0, 0, 0.6); /* Fundo mais escuro para o display */
-            border: 1px solid rgba(234, 179, 8, 0.6); /* Borda dourada mais visível */
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(234, 179, 8, 0.6);
         }
     </style>
 </head>
@@ -68,15 +68,13 @@
     </main>
 
     <script>
-        // Formata o valor inicial para o padrão brasileiro
         document.getElementById('premio').innerText = (500.30).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 
         function fazerPagamento() {
             alert("Simulação: Redirecionando para pagamento PIX...");
-            // Em produção, aqui você chamaria sua API de pagamento
             setTimeout(() => {
                 enviarTentativa();
-            }, 1500); // Simula um tempinho de processamento
+            }, 1500); 
         }
 
         async function enviarTentativa() {
@@ -89,8 +87,6 @@
             }
 
             try {
-                // Nota: Isso vai falhar se o servidor backend não estiver rodando localmente
-                // No Render, funcionará corretamente.
                 const res = await fetch('/tentar', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -108,8 +104,8 @@
                     document.getElementById('premio').innerText = data.novoPremio.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
                 }
             } catch (error) {
-                console.error("Erro na requisição. Se estiver rodando apenas o HTML, isso é normal.", error);
-                alert("Simulação: O servidor não respondeu. Em produção, isso validaria a senha.");
+                console.error("Erro na requisição", error);
+                alert("Simulação (Offline): O servidor não respondeu. Em produção, isso funcionará.");
             }
         }
     </script>

@@ -35,10 +35,7 @@
         .shake { animation: shake 0.5s; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
         @keyframes shimmer { 0% { left: -100%; } 100% { left: 200%; } }
-        /* Classe para o botão de hackear */
-        .hack-button {
-            text-shadow: 0 0 10px rgba(234, 179, 8, 0.7);
-        }
+        .hack-button { text-shadow: 0 0 10px rgba(234, 179, 8, 0.7); }
     </style>
 </head>
 <body class="text-white flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden">
@@ -124,24 +121,24 @@
     </div>
 
     <div id="modal-dicas" class="fixed inset-0 modal-backdrop z-[80] hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-yellow-500/50 p-6 rounded-[2rem] w-full max-w-sm shadow-2xl">
-            <button onclick="fecharModal('modal-dicas')" class="absolute top-4 right-4 text-slate-500">✕</button>
+        <div class="bg-slate-900 border border-yellow-500/50 p-6 rounded-[2rem] w-full max-w-sm shadow-2xl relative">
+            <button onclick="fecharModal('modal-dicas')" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
             <div class="text-center mb-8">
-                <h3 class="text-2xl font-black text-yellow-500 italic uppercase">Comprar Pista</h3>
-                <p class="text-slate-400 text-[10px]">Aumente drasticamente suas chances</p>
+                <h3 class="text-2xl font-black text-yellow-500 italic uppercase">HACK DO SISTEMA</h3>
+                <p class="text-slate-400 text-[10px]">Valores baseados no prêmio atual</p>
             </div>
             <div class="space-y-3">
-                <div onclick="comprarDica(1, 10.00, 'Pista 1')" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700 cursor-pointer hover:bg-slate-700/80 transition-all">
+                <div id="btn-dica-1" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700 cursor-pointer hover:bg-slate-700/80 transition-all">
                     <span class="text-sm font-bold">REVELAR 1º NÚMERO</span>
-                    <span class="text-green-400 font-black">R$ 10,00</span>
+                    <span id="val-dica-1" class="text-green-400 font-black">--</span>
                 </div>
-                <div onclick="comprarDica(2, 25.00, 'Pista 2')" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700 cursor-pointer hover:bg-slate-700/80 transition-all">
+                <div id="btn-dica-2" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700 cursor-pointer hover:bg-slate-700/80 transition-all">
                     <span class="text-sm font-bold">REVELAR 2 NÚMEROS</span>
-                    <span class="text-green-400 font-black">R$ 25,00</span>
+                    <span id="val-dica-2" class="text-green-400 font-black">--</span>
                 </div>
-                <div onclick="comprarDica(3, 50.00, 'Pista 3')" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700 cursor-pointer hover:bg-slate-700/80 transition-all">
+                <div id="btn-dica-3" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700 cursor-pointer hover:bg-slate-700/80 transition-all">
                     <span class="text-sm font-bold">REVELAR 3 NÚMEROS</span>
-                    <span class="text-green-400 font-black">R$ 50,00</span>
+                    <span id="val-dica-3" class="text-green-400 font-black">--</span>
                 </div>
             </div>
         </div>
@@ -168,7 +165,30 @@
         let historico = JSON.parse(localStorage.getItem('openpix_history')) || [];
 
         function fecharModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function abrirDicas() { document.getElementById('modal-dicas').classList.remove('hidden'); }
+
+        // --- CALCULO DINAMICO DE PREÇOS (O SEGREDO) ---
+        function abrirDicas() {
+            // Pega o valor do prêmio da tela e converte para numero (ex: 500,30)
+            let textoPremio = $('#premio').text().replace('.', '').replace(',', '.');
+            let valorPremio = parseFloat(textoPremio);
+
+            // Calcula porcentagens
+            let p1 = valorPremio * 0.05; // 5%
+            let p2 = valorPremio * 0.15; // 15%
+            let p3 = valorPremio * 0.50; // 50%
+
+            // Atualiza os textos na tela
+            $('#val-dica-1').text('R$ ' + p1.toLocaleString('pt-BR', {minimumFractionDigits: 2}));
+            $('#val-dica-2').text('R$ ' + p2.toLocaleString('pt-BR', {minimumFractionDigits: 2}));
+            $('#val-dica-3').text('R$ ' + p3.toLocaleString('pt-BR', {minimumFractionDigits: 2}));
+
+            // Atualiza os botões com os novos valores
+            $('#btn-dica-1').attr('onclick', `comprarDica(1, ${p1.toFixed(2)}, 'Pista 1 (5%)')`);
+            $('#btn-dica-2').attr('onclick', `comprarDica(2, ${p2.toFixed(2)}, 'Pista 2 (15%)')`);
+            $('#btn-dica-3').attr('onclick', `comprarDica(3, ${p3.toFixed(2)}, 'Pista 3 (50%)')`);
+
+            document.getElementById('modal-dicas').classList.remove('hidden');
+        }
 
         function verificarLogin() {
             if (document.getElementById('senha').value.length !== 4) return;
@@ -200,7 +220,7 @@
 
         async function comprarDica(nivel, valor, plano) {
             fecharModal('modal-dicas');
-            if(confirm(`Confirmar pagamento de R$ ${valor.toFixed(2)}?`)) {
+            if(confirm(`O valor desta pista é R$ ${valor}. Confirmar pagamento?`)) {
                 const res = await fetch('/comprar-dica', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ nivel, valor, plano }) });
                 const data = await res.json();
                 $('#terminal').removeClass('hidden').css('opacity', '1').empty();

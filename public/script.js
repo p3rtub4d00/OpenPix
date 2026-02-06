@@ -11,11 +11,10 @@ function play(sound) {
 
 // --- EFEITO VIBRAR (Haptic Feedback) ---
 function vibrar(ms = 50) {
-    // Tenta vibrar se o navegador permitir
     if (navigator.vibrate) navigator.vibrate(ms);
 }
 
-// --- EFEITO MATRIX (COM TRANSPARÊNCIA PARA O FUNDO) ---
+// --- EFEITO MATRIX (COM TRANSPARÊNCIA) ---
 const canvas = document.getElementById('matrix-canvas');
 const ctx = canvas.getContext('2d');
 
@@ -26,18 +25,17 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-const chars = '01XYZ$#@%&£€₹'; // Caracteres mais "hacker"
+const chars = '01XYZ$#@%&£€₹MATRIX'; 
 const fontSize = 14;
 const columns = canvas.width / fontSize;
 const drops = Array(Math.floor(columns)).fill(1);
 
 function drawMatrix() {
-    // IMPORTANTE: O fillStyle tem transparência baixa (0.05)
-    // Isso cria o efeito de rastro e permite que a imagem de fundo apareça.
+    // Fundo com transparência para ver a imagem atrás
     ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    ctx.fillStyle = '#22c55e'; // Cor verde do código
+    ctx.fillStyle = '#22c55e'; // Verde Hacker
     ctx.font = fontSize + 'px monospace';
     
     for (let i = 0; i < drops.length; i++) {
@@ -50,29 +48,42 @@ function drawMatrix() {
         drops[i]++;
     }
 }
-// Roda a animação a cada 50ms
 setInterval(drawMatrix, 50);
 
-// --- INICIALIZAÇÃO E MÁSCARAS ---
+// --- UTILITÁRIOS DE DADOS FALSOS ---
+function gerarIpAleatorio() {
+    return Math.floor(Math.random() * 255) + '.' + 
+           Math.floor(Math.random() * 255) + '.' + 
+           Math.floor(Math.random() * 255) + '.' + 
+           Math.floor(Math.random() * 255);
+}
+
+function gerarPortaAleatoria() {
+    // Portas comuns de ataque + aleatórias
+    const portas = [80, 443, 8080, 21, 22, 3306, 27017];
+    if(Math.random() > 0.5) return portas[Math.floor(Math.random() * portas.length)];
+    return Math.floor(Math.random() * 9000) + 1000;
+}
+
+// --- INICIALIZAÇÃO ---
 $(document).ready(() => {
     $('#input-tel').mask('(00) 00000-0000');
     $('#input-cpf').mask('000.000.000-00');
 });
 
-// --- DADOS DO USUÁRIO ---
+// --- DADOS ---
 let usuario = JSON.parse(localStorage.getItem('openpix_user')) || null;
 let historico = JSON.parse(localStorage.getItem('openpix_history')) || [];
 let tokenVitoriaAtual = "";
 
-// --- FUNÇÕES DE INTERFACE (UI) ---
+// --- INTERFACE ---
 function fecharModal(id) { document.getElementById(id).classList.add('hidden'); }
 
 function abrirDicas() {
-    vibrar(); // Feedback tátil
+    vibrar();
     let textoPremio = $('#premio').text().replace('.', '').replace(',', '.');
     let valorPremio = parseFloat(textoPremio);
 
-    // Calcula preços dinâmicos
     let p1 = valorPremio * 0.05; 
     let p2 = valorPremio * 0.15; 
     let p3 = valorPremio * 0.50; 
@@ -91,13 +102,7 @@ function abrirDicas() {
 function verificarLogin() {
     vibrar();
     if (document.getElementById('senha').value.length !== 4) {
-        // Alerta bonito (SweetAlert) em vez de nativo
-        Swal.fire({
-            icon: 'warning',
-            title: 'Senha Inválida',
-            text: 'A senha deve ter exatamente 4 dígitos.',
-            confirmButtonText: 'Entendi'
-        });
+        Swal.fire({ icon: 'warning', title: 'Senha Inválida', text: 'Digite 4 números.' });
         return;
     }
     if (!usuario) document.getElementById('modal-cadastro').classList.remove('hidden');
@@ -117,38 +122,37 @@ function salvarCadastro(e) {
     });
 
     fecharModal('modal-cadastro');
-    Swal.fire({ icon: 'success', title: 'Cadastro Salvo', timer: 1500, showConfirmButton: false });
+    Swal.fire({ icon: 'success', title: 'Salvo', timer: 1000, showConfirmButton: false });
     document.getElementById('modal-planos').classList.remove('hidden');
 }
 
 function selecionarPlano(valor, chances, plano) {
     vibrar();
     fecharModal('modal-planos');
-    $('#btn-texto').html('<i class="fas fa-sync fa-spin"></i> VALIDANDO PAGAMENTO...');
+    $('#btn-texto').html('<i class="fas fa-sync fa-spin"></i> VALIDANDO...');
     
-    // Simula delay de pagamento PIX
     setTimeout(() => {
         fetch('/registrar-venda', { 
             method: 'POST', 
             headers: {'Content-Type': 'application/json'}, 
             body: JSON.stringify({ valor, plano }) 
         });
-        // Inicia a tentativa automaticamente após "pagar"
         iniciarHack();
-    }, 2000);
+    }, 1500);
 }
 
 async function comprarDica(nivel, valor, plano) {
     fecharModal('modal-dicas');
     
-    // Confirmação com SweetAlert
     const result = await Swal.fire({
-        title: 'Confirmar Compra da Dica?',
-        text: `O valor de R$ ${valor} será descontado.`,
+        title: 'Confirmar?',
+        text: `Investimento: R$ ${valor}`,
         icon: 'question',
         showCancelButton: true,
-        confirmButtonText: 'Sim, Comprar',
-        cancelButtonText: 'Cancelar'
+        confirmButtonColor: '#22c55e',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'SIM',
+        cancelButtonText: 'NÃO'
     });
 
     if(result.isConfirmed) {
@@ -161,45 +165,40 @@ async function comprarDica(nivel, valor, plano) {
         const data = await res.json();
         
         $('#terminal').removeClass('hidden').css('opacity', '1').empty();
-        log(`EXECUTANDO SCRIPT DE DICA NÍVEL ${nivel}...`, "#eab308");
-        await new Promise(r => setTimeout(r, 1000));
-        log(`DADOS OBTIDOS: [ ${data.dica} ]`, "#fff");
+        await log(`INJETANDO EXPLOIT V.${nivel}...`, "#eab308");
+        await delay(1000);
+        await log(`DADOS ENCONTRADOS: [ ${data.dica} ]`, "#fff");
         
         Swal.fire({
-            title: 'DICA HACKER RECEBIDA',
-            html: `A senha contém os números: <br><b style="font-size:2em; color:#4ade80">${data.dica}</b>`,
+            title: 'DICA RECEBIDA',
+            html: `Senha contém: <br><b style="font-size:2em; color:#4ade80">${data.dica}</b>`,
             icon: 'success'
         });
     }
 }
 
-// --- FUNÇÃO PARA ANIMAR NÚMEROS (Contador do Prêmio) ---
 function animarValor(elementoId, valorFinal) {
     const elemento = document.getElementById(elementoId);
     if (!elemento) return;
-    
-    // Limpa o valor atual para pegar apenas o número
     let valorInicial = parseFloat(elemento.innerText.replace(/[^\d,]/g, '').replace(',', '.'));
     if (isNaN(valorInicial)) valorInicial = 0;
     
-    const duracao = 1500; // Duração da animação em ms
+    const duracao = 1000;
     const inicio = performance.now();
     
     requestAnimationFrame(function step(timestamp) {
         const progresso = (timestamp - inicio) / duracao;
         if (progresso < 1) {
             const valorAtual = valorInicial + (valorFinal - valorInicial) * progresso;
-            // Formata como moeda BRL durante a animação
             elemento.innerText = valorAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             requestAnimationFrame(step);
         } else {
-            // Valor final exato
             elemento.innerText = valorFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
     });
 }
 
-// --- LÓGICA PRINCIPAL DO JOGO ---
+// --- LOG E HACKING ---
 async function log(m, c = "#4ade80") {
     play(sfx.type);
     const line = $(`<div class="log-line" style="color:${c}"><i class="fas fa-terminal"></i> ${m}</div>`);
@@ -207,16 +206,36 @@ async function log(m, c = "#4ade80") {
     $('#terminal').scrollTop($('#terminal')[0].scrollHeight);
 }
 
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
 async function iniciarHack() {
-    vibrar(); // Vibra ao começar
+    vibrar();
     const senhaTentativa = $('#senha').val();
     $('#btn-acao').prop('disabled', true);
     $('#terminal').removeClass('hidden').css('opacity', '1').empty();
     
-    await log(`Iniciando conexão brute-force...`);
-    await new Promise(r => setTimeout(r, 600));
-    await log(`Testando hash: [ ${senhaTentativa} ]`);
-    await new Promise(r => setTimeout(r, 800));
+    // --- SEQUÊNCIA DE HACKING (TEATRO) ---
+    // Isso cria a tensão que você pediu
+    await log(`INICIANDO PROTOCOLO SSH...`, "#fff");
+    await delay(500);
+
+    await log(`CONECTANDO AO IP ${gerarIpAleatorio()}...`);
+    await delay(600);
+    
+    await log(`ACESSANDO PORTA ${gerarPortaAleatoria()} [ ABERTA ]`, "#eab308");
+    await delay(400);
+
+    // Gera mais um IP aleatório para parecer que mudou a rota
+    await log(`REDIRECIONANDO PROXY: ${gerarIpAleatorio()}... OK`);
+    await delay(500);
+
+    await log(`BYPASS FIREWALL NÍVEL 5... [ SUCESSO ]`, "#4ade80");
+    await delay(700);
+
+    await log(`TESTANDO CREDENCIAL: [ ${senhaTentativa} ]`, "#fff");
+    await delay(800);
+    
+    // --- FIM DO TEATRO, AGORA O RESULTADO REAL ---
 
     const res = await fetch('/tentar', { 
         method: 'POST', 
@@ -229,23 +248,26 @@ async function iniciarHack() {
     localStorage.setItem('openpix_history', JSON.stringify(historico));
 
     if (data.ganhou) {
-        // VITÓRIA
         play(sfx.win);
-        vibrar([200, 100, 200]); // Padrão de vibração de vitória
+        vibrar([200, 100, 200]);
         tokenVitoriaAtual = data.token;
-        await log("SENHA CORRETA! FIREWALL DERRUBADO.", "#fbbf24");
+        
+        await log("CRIPTOGRAFIA QUEBRADA!", "#fbbf24");
+        await delay(300);
+        await log("ACESSO ROOT CONCEDIDO.", "#fbbf24");
         
         $('#valor-vitoria').text(data.premio.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
         setTimeout(() => { document.getElementById('modal-vitoria').classList.remove('hidden'); }, 1000);
 
     } else {
-        // DERROTA
         play(sfx.error);
-        vibrar(300); // Vibração de erro mais longa
-        await log("FALHA. SENHA INCORRETA. ALARME ACIONADO.", "#ef4444");
-        $('body').addClass('shake');
+        vibrar(300);
         
-        // Anima o prêmio subindo
+        await log(`ERRO: HASH INVÁLIDO NO IP ${gerarIpAleatorio()}`, "#ef4444");
+        await delay(400);
+        await log("CONEXÃO DERRUBADA PELO SERVIDOR.", "#ef4444");
+        
+        $('body').addClass('shake');
         animarValor('premio', data.novoPremio);
         
         setTimeout(() => {
@@ -253,22 +275,15 @@ async function iniciarHack() {
             $('#terminal').css('opacity', '0').addClass('hidden');
             $('#senha').val('').prop('disabled', false).focus();
             $('#btn-acao').prop('disabled', false);
-            $('#btn-texto').html('<i class="fas fa-unlock-alt"></i> TENTAR NOVAMENTE'); 
-        }, 2000);
+            $('#btn-texto').html('TENTAR NOVAMENTE'); 
+        }, 2500);
     }
 }
 
-// --- SOLICITAÇÃO DE SAQUE ---
 async function solicitarSaque() {
     vibrar();
     const pix = $('#pix-vitoria').val();
-    
-    if(!pix) {
-        Swal.fire({ icon: 'error', title: 'Erro', text: 'Por favor, informe a Chave PIX.' });
-        return;
-    }
-    
-    const valor = parseFloat($('#valor-vitoria').text().replace('.','').replace(',','.'));
+    if(!pix) return Swal.fire({ icon: 'error', title: 'Erro', text: 'Informe a Chave PIX.' });
     
     await fetch('/solicitar-saque', {
         method: 'POST',
@@ -278,35 +293,30 @@ async function solicitarSaque() {
             pix: pix,
             nome: usuario.nome,
             cpf: usuario.cpf,
-            valor: valor
+            valor: parseFloat($('#valor-vitoria').text().replace('.','').replace(',','.'))
         })
     });
 
     document.getElementById('modal-vitoria').classList.add('hidden');
-    
     Swal.fire({
         icon: 'success',
-        title: 'SOLICITAÇÃO ENVIADA!',
-        html: 'O valor de <b>R$ '+valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})+'</b> será creditado em breve.',
-        confirmButtonText: 'OK',
-        confirmButtonColor: '#eab308'
-    }).then(() => {
-        location.reload(); // Recarrega para reiniciar o jogo
-    });
+        title: 'PROCESSANDO SAQUE...',
+        text: 'Aguarde a notificação do seu banco.',
+        confirmButtonColor: '#22c55e'
+    }).then(() => location.reload());
 }
 
 function abrirHistorico() {
     vibrar();
     const lista = $('#lista-historico').empty();
     if (!historico.length) {
-        lista.html('<p class="text-center text-slate-500 mt-10 text-xs">Nenhum palpite registrado ainda.</p>');
+        lista.html('<p class="text-center text-slate-500 mt-10 text-xs">Sem registros.</p>');
     } else {
-        // Mostra o histórico do mais recente para o mais antigo
         historico.slice().reverse().forEach(h => {
             lista.append(`
-                <div class="bg-black/50 p-3 rounded-lg border border-slate-800 flex justify-between items-center mb-2 font-mono">
-                    <span class="text-white tracking-widest">${h.senha}</span>
-                    <span class="text-[9px] font-bold px-2 py-1 rounded ${h.ganhou ? 'bg-green-500 text-black' : 'bg-red-900/50 text-red-500'}">
+                <div class="bg-black/40 p-3 rounded-lg border border-slate-700 flex justify-between items-center mb-2">
+                    <span class="font-mono text-white tracking-widest">${h.senha}</span>
+                    <span class="text-[9px] font-bold px-2 py-1 rounded ${h.ganhou ? 'bg-green-500 text-black' : 'bg-red-500/20 text-red-500'}">
                         ${h.ganhou ? 'SUCESSO' : 'FALHA'}
                     </span>
                 </div>
@@ -316,12 +326,11 @@ function abrirHistorico() {
     document.getElementById('modal-historico').classList.remove('hidden');
 }
 
-// --- CONTADOR ONLINE FAKE (Só para movimento) ---
 const contadorEl = document.getElementById('contador-online');
 setInterval(() => {
     let atual = parseInt(contadorEl.innerText);
     let variacao = Math.floor(Math.random() * 5) - 2; 
     let novo = atual + variacao;
-    if (novo < 120) novo = 120; 
+    if (novo < 120) novo = 120;
     contadorEl.innerText = novo;
-}, 4000);
+}, 3000);

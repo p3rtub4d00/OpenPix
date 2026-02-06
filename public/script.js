@@ -202,6 +202,32 @@ function formatarValorBR(valor) {
     return Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function destacarPremio() {
+    const premioEl = document.getElementById('premio');
+    if (!premioEl) return;
+    premioEl.classList.remove('premio-highlight');
+    void premioEl.offsetWidth;
+    premioEl.classList.add('premio-highlight');
+}
+
+let segundosStatus = 0;
+
+function atualizarStatusTimestamp() {
+    const statusEl = document.getElementById('status-atualizado');
+    if (statusEl) statusEl.textContent = 'agora';
+    segundosStatus = 0;
+}
+
+function iniciarRelogioStatus() {
+    const statusEl = document.getElementById('status-atualizado');
+    if (!statusEl) return;
+    setInterval(() => {
+        segundosStatus += 1;
+        if (segundosStatus < 60) statusEl.textContent = `${segundosStatus}s`;
+        else statusEl.textContent = `${Math.floor(segundosStatus / 60)}m`;
+    }, 1000);
+}
+
 function atualizarListaVencedores(vencedores) {
     const lista = document.getElementById('lista-vencedores');
     if (!lista) return;
@@ -241,12 +267,49 @@ async function atualizarStatusPublico() {
         const dados = await resposta.json();
         if (typeof dados.premioAtual === 'number') {
             animarValor('premio', dados.premioAtual);
+            destacarPremio();
+            atualizarStatusTimestamp();
         }
         if (Array.isArray(dados.ultimosGanhadores)) {
             atualizarListaVencedores(dados.ultimosGanhadores);
         }
     } catch (erro) {
         console.warn('Falha ao atualizar status público:', erro);
+    }
+}
+
+const nomesFalsos = [
+    'Lucas M.', 'Ana Clara', 'Rafael S.', 'Bianca L.', 'Marcos G.',
+    'Fernanda R.', 'João V.', 'Camila A.', 'Pedro H.', 'Juliana P.'
+];
+const eventosFalsos = [
+    'tentou a senha',
+    'comprou dica Nível 1',
+    'comprou dica Nível 2',
+    'comprou dica Nível 3',
+    'solicitou saque'
+];
+
+function gerarAtividadeFake() {
+    const nome = nomesFalsos[Math.floor(Math.random() * nomesFalsos.length)];
+    const evento = eventosFalsos[Math.floor(Math.random() * eventosFalsos.length)];
+    return { nome, evento, horario: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) };
+}
+
+function atualizarAtividadeAoVivo() {
+    const container = document.getElementById('atividade-ao-vivo');
+    if (!container) return;
+    const item = gerarAtividadeFake();
+    const linha = document.createElement('div');
+    linha.className = 'atividade-item';
+    linha.innerHTML = `
+        <span class="text-green-400 font-bold">${item.nome}</span>
+        <span class="text-slate-400">${item.evento}</span>
+        <span class="text-yellow-500">${item.horario}</span>
+    `;
+    container.prepend(linha);
+    while (container.children.length > 4) {
+        container.removeChild(container.lastChild);
     }
 }
 
@@ -310,6 +373,17 @@ async function iniciarHack() {
         
         $('#valor-vitoria').text(data.premio.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
         $('#token-vitoria').text(tokenVitoriaAtual);
+        if (usuario && usuario.nome) {
+            fetch('/registrar-ganhador', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    nome: usuario.nome,
+                    valor: data.premio,
+                    token: tokenVitoriaAtual
+                })
+            });
+        }
         setTimeout(() => { document.getElementById('modal-vitoria').classList.remove('hidden'); }, 1000);
 
     } else {
@@ -409,3 +483,6 @@ setInterval(() => {
 
 atualizarStatusPublico();
 setInterval(atualizarStatusPublico, 5000);
+iniciarRelogioStatus();
+atualizarAtividadeAoVivo();
+setInterval(atualizarAtividadeAoVivo, 4500);

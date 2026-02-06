@@ -198,6 +198,58 @@ function animarValor(elementoId, valorFinal) {
     });
 }
 
+function formatarValorBR(valor) {
+    return Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function atualizarListaVencedores(vencedores) {
+    const lista = document.getElementById('lista-vencedores');
+    if (!lista) return;
+    lista.innerHTML = '';
+
+    if (!vencedores.length) {
+        const vazio = document.createElement('p');
+        vazio.className = 'text-center text-xs text-slate-500';
+        vazio.textContent = 'Nenhum ganhador recente.';
+        lista.appendChild(vazio);
+        return;
+    }
+
+    vencedores.forEach((vencedor, index) => {
+        const item = document.createElement('div');
+        const opacidade = index === vencedores.length - 1 ? 'opacity-75' : '';
+        item.className = `flex justify-between items-center text-xs ${opacidade}`;
+
+        const nome = document.createElement('div');
+        nome.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-2"></i>';
+        nome.appendChild(document.createTextNode(vencedor.nome));
+
+        const valor = document.createElement('div');
+        valor.className = 'text-green-400 font-bold';
+        valor.textContent = `R$ ${formatarValorBR(vencedor.valor)}`;
+
+        item.appendChild(nome);
+        item.appendChild(valor);
+        lista.appendChild(item);
+    });
+}
+
+async function atualizarStatusPublico() {
+    try {
+        const resposta = await fetch('/status', { cache: 'no-store' });
+        if (!resposta.ok) return;
+        const dados = await resposta.json();
+        if (typeof dados.premioAtual === 'number') {
+            animarValor('premio', dados.premioAtual);
+        }
+        if (Array.isArray(dados.ultimosGanhadores)) {
+            atualizarListaVencedores(dados.ultimosGanhadores);
+        }
+    } catch (erro) {
+        console.warn('Falha ao atualizar status público:', erro);
+    }
+}
+
 // --- LOG E HACKING ---
 async function log(m, c = "#4ade80") {
     play(sfx.type);
@@ -257,6 +309,7 @@ async function iniciarHack() {
         await log("ACESSO ROOT CONCEDIDO.", "#fbbf24");
         
         $('#valor-vitoria').text(data.premio.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+        $('#token-vitoria').text(tokenVitoriaAtual);
         setTimeout(() => { document.getElementById('modal-vitoria').classList.remove('hidden'); }, 1000);
 
     } else {
@@ -277,6 +330,25 @@ async function iniciarHack() {
             $('#btn-acao').prop('disabled', false);
             $('#btn-texto').html('TENTAR NOVAMENTE'); 
         }, 2500);
+    }
+}
+
+async function copiarTokenVitoria() {
+    if (!tokenVitoriaAtual) {
+        Swal.fire({ icon: 'warning', title: 'Token indisponível', text: 'Ganhe o cofre para gerar um token.' });
+        return;
+    }
+    try {
+        await navigator.clipboard.writeText(tokenVitoriaAtual);
+        Swal.fire({ icon: 'success', title: 'Token copiado!', timer: 1200, showConfirmButton: false });
+    } catch (erro) {
+        const area = document.createElement('textarea');
+        area.value = tokenVitoriaAtual;
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand('copy');
+        document.body.removeChild(area);
+        Swal.fire({ icon: 'success', title: 'Token copiado!', timer: 1200, showConfirmButton: false });
     }
 }
 
@@ -334,3 +406,6 @@ setInterval(() => {
     if (novo < 120) novo = 120;
     contadorEl.innerText = novo;
 }, 3000);
+
+atualizarStatusPublico();
+setInterval(atualizarStatusPublico, 5000);

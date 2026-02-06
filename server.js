@@ -19,6 +19,8 @@ const SENHA_ADMIN = "admin123";
 const ARQUIVO_LEADS = 'leads.json';
 const ARQUIVO_FINANCEIRO = 'financeiro.json';
 const ARQUIVO_SOLICITACOES = 'solicitacoes.json';
+const ARQUIVO_GANHADORES = 'ganhadores.json';
+const ARQUIVO_TENTATIVAS = 'tentativas.json';
 const ARQUIVO_CONFIG = 'config.json';
 
 // Inicializa o cofre se não existir
@@ -92,14 +94,82 @@ function obterConfigCofreAtual() {
 }
 
 function obterUltimosGanhadores(quantidade = 3) {
+    const ganhadores = lerArquivo(ARQUIVO_GANHADORES);
+    if (ganhadores.length) {
+        return ganhadores
+            .slice(-quantidade)
+            .reverse()
+            .map(ganhador => ({
+                nome: ganhador.nome,
+                valor: ganhador.valor
+            }));
+    }
+
     const solicitacoes = lerArquivo(ARQUIVO_SOLICITACOES);
     return solicitacoes
-        .filter(solicitacao => solicitacao.status === "PAGO")
+        .filter(solicitacao => ["PAGO", "PENDENTE"].includes(solicitacao.status))
         .slice(-quantidade)
         .reverse()
         .map(solicitacao => ({
             nome: solicitacao.nome,
             valor: solicitacao.valor
+        }));
+}
+
+function parseDataPtBr(dataStr) {
+    if (!dataStr || typeof dataStr !== 'string') return null;
+    const [data, hora] = dataStr.split(' ');
+    if (!data) return null;
+    const [dia, mes, ano] = data.split('/');
+    if (!dia || !mes || !ano) return null;
+    const horaStr = hora || '00:00:00';
+    const [hh, mm, ss] = horaStr.split(':');
+    return new Date(
+        Number(ano),
+        Number(mes) - 1,
+        Number(dia),
+        Number(hh || 0),
+        Number(mm || 0),
+        Number(ss || 0)
+    );
+}
+
+function obterChaveData(registro) {
+    if (registro.dataISO) {
+        return new Date(registro.dataISO).toISOString().slice(0, 10);
+    }
+    const data = parseDataPtBr(registro.data);
+    if (!data || Number.isNaN(data.getTime())) return null;
+    return data.toISOString().slice(0, 10);
+}
+
+function gerarSerieDiaria(registros, extrairValor, dias = 7) {
+    const hoje = new Date();
+    const labels = [];
+    const valores = [];
+    for (let i = dias - 1; i >= 0; i--) {
+        const dia = new Date(hoje);
+        dia.setDate(hoje.getDate() - i);
+        labels.push(dia.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+        const chave = dia.toISOString().slice(0, 10);
+        const total = registros
+            .filter(registro => obterChaveData(registro) === chave)
+            .reduce((acc, registro) => acc + extrairValor(registro), 0);
+        valores.push(Number(total.toFixed(2)));
+    }
+    return { labels, valores };
+}
+
+function obterTopVencedoresDia(quantidade = 5) {
+    const ganhadores = lerArquivo(ARQUIVO_GANHADORES);
+    const hoje = new Date().toISOString().slice(0, 10);
+    return ganhadores
+        .filter(ganhador => obterChaveData(ganhador) === hoje)
+        .sort((a, b) => (b.valor || 0) - (a.valor || 0))
+        .slice(0, quantidade)
+        .map(ganhador => ({
+            nome: ganhador.nome,
+            valor: ganhador.valor
         }));
 }
 
@@ -112,7 +182,8 @@ app.post('/salvar-lead', (req, res) => {
     const leads = lerArquivo(ARQUIVO_LEADS);
     leads.push({
         ...req.body,
-        data: new Date().toLocaleString('pt-BR')
+        data: new Date().toLocaleString('pt-BR'),
+        dataISO: new Date().toISOString()
     });
     salvarArquivo(ARQUIVO_LEADS, leads);
     res.json({ status: "ok" });
@@ -123,7 +194,8 @@ app.post('/registrar-venda', (req, res) => {
     const vendas = lerArquivo(ARQUIVO_FINANCEIRO);
     vendas.push({
         ...req.body,
-        data: new Date().toLocaleString('pt-BR')
+        data: new Date().toLocaleString('pt-BR'),
+        dataISO: new Date().toISOString()
     });
     salvarArquivo(ARQUIVO_FINANCEIRO, vendas);
     
@@ -139,7 +211,8 @@ app.post('/comprar-dica', (req, res) => {
     vendas.push({
         plano: plano,
         valor: parseFloat(valor),
-        data: new Date().toLocaleString('pt-BR')
+        data: new Date().toLocaleString('pt-BR'),
+        dataISO: new Date().toISOString()
     });
     salvarArquivo(ARQUIVO_FINANCEIRO, vendas);
     
@@ -157,10 +230,19 @@ app.post('/comprar-dica', (req, res) => {
 // Tentar Senha
 app.post('/tentar', (req, res) => {
     const { senha } = req.body;
+    const tentativas = lerArquivo(ARQUIVO_TENTATIVAS);
     
     if (senha === configCofre.senhaCorreta) {
         // Vitória
         const tokenVitoria = "WIN-" + crypto.randomBytes(3).toString('hex').toUpperCase();
+
+        tentativas.push({
+            id: crypto.randomUUID(),
+            ganhou: true,
+            data: new Date().toLocaleString('pt-BR'),
+            dataISO: new Date().toISOString()
+        });
+        salvarArquivo(ARQUIVO_TENTATIVAS, tentativas);
         
         notificarTelegram(`🚨🚨 *O COFRE FOI ABERTO!* 🚨🚨\nSenha: ${senha}\nToken: ${tokenVitoria}\nAguardando solicitação de saque.`);
         
@@ -171,6 +253,14 @@ app.post('/tentar', (req, res) => {
         });
     } else {
         // Derrota (Aumenta prêmio)
+        tentativas.push({
+            id: crypto.randomUUID(),
+            ganhou: false,
+            data: new Date().toLocaleString('pt-BR'),
+            dataISO: new Date().toISOString()
+        });
+        salvarArquivo(ARQUIVO_TENTATIVAS, tentativas);
+
         configCofre.premioAtual += 0.50; 
         salvarArquivo(ARQUIVO_CONFIG, configCofre);
         res.json({
@@ -193,7 +283,8 @@ app.post('/solicitar-saque', (req, res) => {
         pix: pix,
         valor: parseFloat(valor),
         status: "PENDENTE",
-        data: new Date().toLocaleString('pt-BR')
+        data: new Date().toLocaleString('pt-BR'),
+        dataISO: new Date().toISOString()
     });
     
     salvarArquivo(ARQUIVO_SOLICITACOES, solicitacoes);
@@ -202,12 +293,32 @@ app.post('/solicitar-saque', (req, res) => {
     res.json({ sucesso: true });
 });
 
+// Registrar vencedor (para aparecer nos últimos ganhadores)
+app.post('/registrar-ganhador', (req, res) => {
+    const { nome, valor, token } = req.body;
+    if (!nome || !valor || !token) {
+        return res.status(400).json({ sucesso: false });
+    }
+    const ganhadores = lerArquivo(ARQUIVO_GANHADORES);
+    ganhadores.push({
+        id: crypto.randomUUID(),
+        nome: nome,
+        valor: parseFloat(valor),
+        token: token,
+        data: new Date().toLocaleString('pt-BR'),
+        dataISO: new Date().toISOString()
+    });
+    salvarArquivo(ARQUIVO_GANHADORES, ganhadores);
+    res.json({ sucesso: true });
+});
+
 // Status público (prêmio e últimos ganhadores)
 app.get('/status', (req, res) => {
     const configAtual = obterConfigCofreAtual();
     res.json({
         premioAtual: configAtual.premioAtual,
-        ultimosGanhadores: obterUltimosGanhadores()
+        ultimosGanhadores: obterUltimosGanhadores(),
+        topVencedoresDia: obterTopVencedoresDia()
     });
 });
 
@@ -291,7 +402,11 @@ app.post('/admin-dashboard', (req, res) => {
     const leads = lerArquivo(ARQUIVO_LEADS);
     const vendas = lerArquivo(ARQUIVO_FINANCEIRO);
     const solicitacoes = lerArquivo(ARQUIVO_SOLICITACOES);
+    const tentativas = lerArquivo(ARQUIVO_TENTATIVAS);
     const totalFaturado = vendas.reduce((acc, v) => acc + (parseFloat(v.valor) || 0), 0);
+    const serieReceita = gerarSerieDiaria(vendas, v => parseFloat(v.valor) || 0);
+    const serieLeads = gerarSerieDiaria(leads, () => 1);
+    const serieTentativas = gerarSerieDiaria(tentativas, () => 1);
 
     // HTML DO DASHBOARD (TOTALMENTE EXPANDIDO)
     res.send(`
@@ -302,6 +417,7 @@ app.post('/admin-dashboard', (req, res) => {
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Painel Admin - OpenPix</title>
         <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
         <style>
             .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -396,6 +512,27 @@ app.post('/admin-dashboard', (req, res) => {
                 </div>
             </div>
 
+            <div class="bg-slate-900 rounded-xl border border-slate-800 mb-10 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-sm uppercase tracking-widest text-slate-400 font-bold">Métricas Visuais</h2>
+                    <span class="text-xs text-slate-500">Últimos 7 dias</span>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                        <p class="text-xs text-slate-500 font-bold uppercase mb-2">Receita diária</p>
+                        <canvas id="chartReceita" height="160"></canvas>
+                    </div>
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                        <p class="text-xs text-slate-500 font-bold uppercase mb-2">Leads diários</p>
+                        <canvas id="chartLeads" height="160"></canvas>
+                    </div>
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                        <p class="text-xs text-slate-500 font-bold uppercase mb-2">Tentativas diárias</p>
+                        <canvas id="chartTentativas" height="160"></canvas>
+                    </div>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 
                 <div class="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden h-[400px] flex flex-col">
@@ -440,6 +577,44 @@ app.post('/admin-dashboard', (req, res) => {
         </div>
 
         <script>
+            const labels = ${JSON.stringify(serieReceita.labels)};
+            const serieReceita = ${JSON.stringify(serieReceita.valores)};
+            const serieLeads = ${JSON.stringify(serieLeads.valores)};
+            const serieTentativas = ${JSON.stringify(serieTentativas.valores)};
+
+            function criarGrafico(id, dados, cor, titulo) {
+                const ctx = document.getElementById(id);
+                if (!ctx) return;
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: titulo,
+                            data: dados,
+                            borderColor: cor,
+                            backgroundColor: 'rgba(255,255,255,0.04)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 3
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } },
+                            y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.1)' } }
+                        }
+                    }
+                });
+            }
+
+            criarGrafico('chartReceita', serieReceita, '#22c55e', 'Receita');
+            criarGrafico('chartLeads', serieLeads, '#38bdf8', 'Leads');
+            criarGrafico('chartTentativas', serieTentativas, '#facc15', 'Tentativas');
+
             async function pagar(id) {
                 if(confirm('Tem certeza que já realizou o PIX para o ganhador? Isso irá marcar a solicitação como PAGA e resetar o cofre.')) {
                     await fetch('/admin-pagar', {

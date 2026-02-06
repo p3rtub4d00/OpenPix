@@ -1,314 +1,97 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenPix | O Segredo do Cofre</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-    <style>
-        body {
-            background-image: url('fundo-cofre.jpg');
-            background-size: cover; background-position: center;
-            background-repeat: no-repeat; background-attachment: fixed;
+const express = require('express');
+const app = express();
+const fs = require('fs');
+const path = require('path');
+
+app.use(express.json());
+app.use(express.static('public')); // Serve os arquivos da pasta public
+
+// Configuração do Cofre
+let cofre = {
+    premioAtual: 500.30,
+    senhaCorreta: "1234",
+    tentativas: 0
+};
+
+const ARQUIVO_LEADS = 'leads.json';
+
+// --- ROTAS ---
+
+// Salvar Cadastro (Lead)
+app.post('/salvar-lead', (req, res) => {
+    const novoUsuario = req.body;
+    novoUsuario.data = new Date().toLocaleString('pt-BR');
+
+    let leads = [];
+    if (fs.existsSync(ARQUIVO_LEADS)) {
+        try {
+            const dados = fs.readFileSync(ARQUIVO_LEADS);
+            leads = JSON.parse(dados);
+        } catch (e) {
+            leads = [];
         }
-        .glass-panel {
-            background: rgba(11, 15, 25, 0.90);
-            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+    }
+
+    leads.push(novoUsuario);
+    fs.writeFileSync(ARQUIVO_LEADS, JSON.stringify(leads, null, 2));
+    
+    res.json({ status: "ok" });
+});
+
+// Tentativa de abrir o cofre
+app.post('/tentar', (req, res) => {
+    const { senha } = req.body;
+    cofre.tentativas++;
+    
+    if (senha === cofre.senhaCorreta) {
+        res.json({ ganhou: true, premio: cofre.premioAtual });
+    } else {
+        cofre.premioAtual += 0.50; // Aumenta o prêmio a cada erro
+        res.json({ ganhou: false, msg: "Senha incorreta", novoPremio: cofre.premioAtual });
+    }
+});
+
+// Painel do Dono (Admin)
+app.get('/admin', (req, res) => {
+    let html = `
+    <!DOCTYPE html>
+    <html lang="pt-br">
+    <head>
+        <meta charset="UTF-8">
+        <title>Painel Admin | OpenPix</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-slate-900 text-white p-10">
+        <h1 class="text-3xl font-bold text-yellow-500 mb-6">🕵️‍♂️ Painel de Leads</h1>
+        <div class="bg-slate-800 rounded-lg overflow-hidden shadow-xl">
+            <table class="w-full text-left">
+                <thead class="bg-slate-700 text-slate-300">
+                    <tr><th class="p-4">Data</th><th class="p-4">Nome</th><th class="p-4">WhatsApp</th><th class="p-4">CPF</th></tr>
+                </thead>
+                <tbody class="divide-y divide-slate-700">
+    `;
+
+    if (fs.existsSync(ARQUIVO_LEADS)) {
+        try {
+            const leads = JSON.parse(fs.readFileSync(ARQUIVO_LEADS));
+            leads.reverse().forEach(lead => {
+                html += `<tr class="hover:bg-slate-700/50">
+                    <td class="p-4 text-sm text-slate-400">${lead.data}</td>
+                    <td class="p-4 font-bold">${lead.nome}</td>
+                    <td class="p-4 text-green-400">${lead.tel}</td>
+                    <td class="p-4 text-yellow-500">${lead.cpf}</td>
+                </tr>`;
+            });
+        } catch (e) {
+            html += `<tr><td colspan="4" class="p-10 text-center">Erro ao ler arquivo.</td></tr>`;
         }
-        .input-display {
-            background: rgba(0, 0, 0, 0.95);
-            border: 1px solid rgba(234, 179, 8, 0.3);
-            box-shadow: inset 0 0 20px rgba(0,0,0,1);
-        }
-        .neon-text {
-            text-shadow: 0 0 10px rgba(74, 222, 128, 0.5), 0 0 20px rgba(74, 222, 128, 0.3);
-        }
-        .terminal-log {
-            font-family: 'Courier New', Courier, monospace; font-size: 0.8rem;
-            text-align: left; padding: 10px; color: #00ff00;
-            min-height: 80px; display: flex; flex-direction: column; justify-content: flex-end;
-            opacity: 0; transition: opacity 0.3s;
-        }
-        .log-line { margin-bottom: 2px; overflow: hidden; white-space: nowrap; animation: typing 0.5s steps(40, end); }
-        @keyframes typing { from { width: 0 } to { width: 100% } }
-        .modal-backdrop { background-color: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); }
-        
-        /* Destaque para o plano recomendado */
-        .plan-card:hover { transform: translateY(-5px); border-color: #eab308; }
-        .best-value { border: 2px solid #eab308; background: rgba(234, 179, 8, 0.1); }
-    </style>
-</head>
-<body class="text-white flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden">
+    } else {
+        html += `<tr><td colspan="4" class="p-10 text-center text-slate-500">Nenhum cadastro.</td></tr>`;
+    }
 
-    <div class="fixed inset-0 bg-black/60 z-[-1]"></div>
+    html += `</tbody></table></div></body></html>`;
+    res.send(html);
+});
 
-    <audio id="sfx-type" src="type.mp3"></audio>
-    <audio id="sfx-error" src="error.mp3"></audio>
-    <audio id="sfx-win" src="win.mp3"></audio>
-
-    <div class="absolute top-4 right-4 z-50">
-        <button onclick="abrirHistorico()" class="bg-white/10 hover:bg-white/20 border border-white/20 text-xs text-white px-4 py-2 rounded-full transition-all flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            MEUS PALPITES
-        </button>
-    </div>
-
-    <main class="glass-panel p-6 sm:p-8 rounded-3xl w-full max-w-md text-center relative overflow-hidden mx-auto border-t border-white/10">
-        <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
-
-        <header class="mb-6">
-            <h1 class="text-5xl font-black tracking-tighter mb-1">
-                <span class="text-yellow-500 drop-shadow-md">OPEN</span><span class="text-white drop-shadow-md">PIX</span>
-            </h1>
-            <p class="text-slate-400 text-[0.65rem] font-bold tracking-[0.3em] uppercase">Sistema de Segurança Ativo</p>
-        </header>
-
-        <div class="mb-8 relative">
-            <div class="absolute inset-0 bg-green-500/5 blur-3xl rounded-full z-0"></div>
-            <span class="relative z-10 text-[0.6rem] uppercase tracking-[0.2em] text-slate-400 font-bold border border-slate-700/50 px-3 py-1 rounded-full bg-black/40">Prêmio Acumulado</span>
-            <div class="relative z-10 text-6xl font-mono font-black text-green-400 mt-3 neon-text tracking-tighter">
-                R$ <span id="premio">500,30</span>
-            </div>
-        </div>
-
-        <div class="input-display p-4 rounded-xl mb-4 relative">
-            <input type="password" id="senha" maxlength="4" placeholder="----" 
-                   class="bg-transparent text-center text-5xl font-mono font-bold tracking-[1rem] outline-none w-full text-white placeholder-slate-800 focus:placeholder-transparent transition-all">
-        </div>
-
-        <div id="terminal" class="terminal-log bg-black/50 rounded-lg mb-4 border border-green-900/30 hidden"></div>
-
-        <button id="btn-acao" onclick="verificarLogin()" 
-                class="w-full bg-gradient-to-b from-yellow-400 to-yellow-600 hover:from-yellow-300 hover:to-yellow-500 text-black font-black text-xl py-4 rounded-xl transition-all transform hover:scale-[1.01] active:scale-95 border-b-4 border-yellow-800 active:border-b-0 active:translate-y-1 relative overflow-hidden group">
-            <div class="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[-20deg] group-hover:animate-[shimmer_1s_infinite]"></div>
-            <span id="btn-texto">ABRIR AGORA</span>
-        </button>
-
-        <footer class="mt-6 text-slate-600 text-[0.5rem] uppercase tracking-widest">
-            <p>Conexão Criptografada SSL • © 2026 OpenPix</p>
-        </footer>
-    </main>
-
-    <div id="modal-cadastro" class="fixed inset-0 modal-backdrop z-[60] hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 p-8 rounded-2xl w-full max-w-sm relative shadow-2xl">
-            <button onclick="fecharModal('modal-cadastro')" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
-            <h3 class="text-xl font-bold text-yellow-500 mb-2">IDENTIFICAÇÃO</h3>
-            <p class="text-slate-400 text-xs mb-6">Identifique-se para validar sua tentativa.</p>
-            <form id="form-cadastro" onsubmit="salvarCadastro(event)">
-                <div class="mb-4 text-left"><label class="text-xs text-slate-500 font-bold ml-1">NOME COMPLETO</label><input type="text" id="input-nome" required class="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white outline-none focus:border-yellow-500"></div>
-                <div class="mb-4 text-left"><label class="text-xs text-slate-500 font-bold ml-1">WHATSAPP</label><input type="tel" id="input-tel" required class="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white outline-none focus:border-yellow-500" placeholder="(11) 99999-9999"></div>
-                <div class="mb-6 text-left"><label class="text-xs text-slate-500 font-bold ml-1">CPF (Chave Pix)</label><input type="text" id="input-cpf" required class="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white outline-none focus:border-yellow-500" placeholder="000.000.000-00"></div>
-                <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl transition-all">SALVAR E CONTINUAR</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="modal-planos" class="fixed inset-0 modal-backdrop z-[70] hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 p-6 rounded-3xl w-full max-w-sm relative shadow-2xl">
-            <button onclick="fecharModal('modal-planos')" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
-            
-            <div class="text-center mb-6">
-                <h3 class="text-2xl font-black text-white italic">ESCOLHA SEU PLANO</h3>
-                <p class="text-slate-400 text-xs">Quanto mais chances, maior a probabilidade de abrir.</p>
-            </div>
-
-            <div class="space-y-3">
-                <div onclick="selecionarPlano(0.50, 1)" class="plan-card cursor-pointer bg-slate-800 border border-slate-600 p-4 rounded-xl flex justify-between items-center transition-all hover:bg-slate-700">
-                    <div>
-                        <div class="font-bold text-white">TENTATIVA ÚNICA</div>
-                        <div class="text-xs text-slate-400">Teste sua sorte agora</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-xl font-black text-yellow-500">R$ 0,50</div>
-                        <div class="text-[0.6rem] text-slate-500">1 chance</div>
-                    </div>
-                </div>
-
-                <div onclick="selecionarPlano(2.00, 5)" class="plan-card best-value cursor-pointer bg-slate-800/80 p-4 rounded-xl flex justify-between items-center transition-all relative overflow-hidden">
-                    <div class="absolute top-0 left-0 bg-yellow-500 text-black text-[0.6rem] font-bold px-2 py-0.5 rounded-br-lg">MAIS VENDIDO</div>
-                    <div>
-                        <div class="font-bold text-white mt-1">COMBO ESTRATÉGIA</div>
-                        <div class="text-xs text-green-400">Você economiza 20%</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-2xl font-black text-yellow-400">R$ 2,00</div>
-                        <div class="text-[0.6rem] text-slate-400">5 chances (R$ 0,40/cada)</div>
-                    </div>
-                </div>
-
-                <div onclick="selecionarPlano(5.00, 15)" class="plan-card cursor-pointer bg-slate-800 border border-slate-600 p-4 rounded-xl flex justify-between items-center transition-all hover:bg-slate-700">
-                    <div>
-                        <div class="font-bold text-white">PACOTE MESTRE</div>
-                        <div class="text-xs text-green-400">Muitas chances de ganhar</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-xl font-black text-yellow-500">R$ 5,00</div>
-                        <div class="text-[0.6rem] text-slate-500">15 chances (R$ 0,33/cada)</div>
-                    </div>
-                </div>
-            </div>
-
-            <p class="text-center text-[0.6rem] text-slate-500 mt-6">Pagamento via PIX Instantâneo</p>
-        </div>
-    </div>
-
-    <div id="modal-historico" class="fixed inset-0 modal-backdrop z-[60] hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 p-6 rounded-2xl w-full max-w-sm relative shadow-2xl h-[400px] flex flex-col">
-            <button onclick="fecharModal('modal-historico')" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
-            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2"><span class="text-yellow-500">📂</span> MEUS PALPITES</h3>
-            <div id="lista-historico" class="flex-1 overflow-y-auto space-y-2 pr-2"></div>
-        </div>
-    </div>
-
-    <script>
-        document.getElementById('premio').innerText = (500.30).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-        
-        const audioType = document.getElementById('sfx-type');
-        const audioError = document.getElementById('sfx-error');
-        const audioWin = document.getElementById('sfx-win');
-        function playSound(sound) { if(sound) { sound.currentTime = 0; sound.play().catch(e => console.log("Audio play blocked")); }}
-
-        $(document).ready(function(){ $('#input-tel').mask('(00) 00000-0000'); $('#input-cpf').mask('000.000.000-00'); });
-        
-        let usuario = JSON.parse(localStorage.getItem('openpix_user')) || null;
-        let historico = JSON.parse(localStorage.getItem('openpix_history')) || [];
-
-        function verificarLogin() {
-            const senhaInput = document.getElementById('senha');
-            if (senhaInput.value.length !== 4) {
-                senhaInput.parentElement.style.borderColor = "red";
-                setTimeout(() => senhaInput.parentElement.style.borderColor = "rgba(234, 179, 8, 0.3)", 500);
-                return;
-            }
-            if (!usuario) { 
-                document.getElementById('modal-cadastro').classList.remove('hidden'); 
-            } else { 
-                // AGORA ABRE OS PLANOS EM VEZ DE IR DIRETO
-                abrirPlanos(); 
-            }
-        }
-
-        function abrirPlanos() {
-            document.getElementById('modal-planos').classList.remove('hidden');
-        }
-
-        function selecionarPlano(valor, chances) {
-            // Aqui entrará a integração do PIX no futuro
-            // Por enquanto, simula o pagamento aprovado
-            
-            fecharModal('modal-planos');
-            
-            // Simula um loading de pagamento rápido
-            const btnAcao = document.getElementById('btn-acao');
-            const btnTexto = document.getElementById('btn-texto');
-            btnAcao.disabled = true;
-            btnTexto.innerText = "AGUARDANDO PIX...";
-            
-            setTimeout(() => {
-                alert(`Simulação: Pagamento de R$ ${valor.toFixed(2)} recebido! Iniciando tentativa...`);
-                iniciarHack(); // Roda a tentativa
-            }, 1500);
-        }
-
-        function falarBoasVindas(nomeCompleto) {
-            if ('speechSynthesis' in window) {
-                const primeiroNome = nomeCompleto.split(' ')[0];
-                const msg = new SpeechSynthesisUtterance();
-                msg.text = `Seja bem vindo, ${primeiroNome}. Selecione seu plano de acesso.`;
-                msg.lang = 'pt-BR'; msg.rate = 1.1; msg.pitch = 0.9;
-                window.speechSynthesis.speak(msg);
-            }
-        }
-
-        function salvarCadastro(e) {
-            e.preventDefault();
-            const nome = document.getElementById('input-nome').value;
-            const tel = document.getElementById('input-tel').value;
-            const cpf = document.getElementById('input-cpf').value;
-
-            usuario = { nome, tel, cpf };
-            localStorage.setItem('openpix_user', JSON.stringify(usuario));
-            
-            fetch('/salvar-lead', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(usuario)
-            }).catch(err => console.log("Erro ao salvar lead"));
-
-            fecharModal('modal-cadastro');
-            falarBoasVindas(nome);
-            abrirPlanos(); // Abre os planos logo após cadastrar
-        }
-
-        function fecharModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-        const terminal = document.getElementById('terminal');
-        const btnAcao = document.getElementById('btn-acao');
-        const btnTexto = document.getElementById('btn-texto');
-        const senhaInput = document.getElementById('senha');
-        const delay = ms => new Promise(res => setTimeout(res, ms));
-
-        async function adicionarLog(msg, cor = "#4ade80") {
-            if(Math.random() > 0.5) playSound(audioType);
-            const linha = document.createElement('div');
-            linha.className = 'log-line'; linha.style.color = cor; linha.innerText = "> " + msg;
-            terminal.appendChild(linha); terminal.scrollTop = terminal.scrollHeight;
-        }
-
-        async function iniciarHack() {
-            const senhaTentativa = senhaInput.value;
-            btnAcao.disabled = true;
-            btnTexto.innerText = "PROCESSANDO...";
-            terminal.classList.remove('hidden'); terminal.style.opacity = "1"; terminal.innerHTML = "";
-            senhaInput.disabled = true;
-
-            await adicionarLog(`Usuário: ${usuario.cpf}`); await delay(500);
-            await adicionarLog("Pagamento Confirmado (Lote #9921)..."); await delay(800);
-            await adicionarLog("Acessando Banco de Dados Central..."); await delay(1200);
-            await adicionarLog("Testando senha: " + senhaTentativa + "..."); await delay(1000);
-
-            try {
-                const res = await fetch('/tentar', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ senha: senhaTentativa })
-                });
-                const data = await res.json();
-                historico.push({ senha: senhaTentativa, ganhou: data.ganhou, data: new Date().toLocaleString('pt-BR') });
-                localStorage.setItem('openpix_history', JSON.stringify(historico));
-
-                if (data.ganhou) {
-                    playSound(audioWin);
-                    await adicionarLog("ACESSO CONCEDIDO!", "#fbbf24"); await delay(1000);
-                    alert(`💰 VOCÊ GANHOU R$ ${data.premio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
-                    location.reload();
-                } else {
-                    playSound(audioError);
-                    await adicionarLog("ERRO: SENHA INCORRETA.", "#ef4444");
-                    document.body.classList.add('shake'); await delay(1500);
-                    document.body.classList.remove('shake');
-                    terminal.style.opacity = "0"; setTimeout(() => terminal.classList.add('hidden'), 300);
-                    senhaInput.value = ""; senhaInput.disabled = false; senhaInput.focus();
-                    btnAcao.disabled = false; btnTexto.innerText = "TENTAR NOVAMENTE";
-                    document.getElementById('premio').innerText = data.novoPremio.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                }
-            } catch (error) {
-                console.error(error); await adicionarLog("ERRO DE REDE", "red"); btnAcao.disabled = false;
-            }
-        }
-        function abrirHistorico() {
-            const lista = document.getElementById('lista-historico'); lista.innerHTML = "";
-            if (historico.length === 0) lista.innerHTML = '<div class="text-center text-slate-500 text-sm mt-10">Vazio.</div>';
-            else historico.slice().reverse().forEach(item => { lista.innerHTML += `<div class="bg-slate-800 p-2 mb-2 rounded border border-slate-700 flex justify-between"><span class="text-white font-mono">${item.senha}</span><span class="${item.ganhou?'text-green-400':'text-red-400'} text-xs font-bold">${item.ganhou?'ABERTO':'ERRO'}</span></div>`; });
-            document.getElementById('modal-historico').classList.remove('hidden');
-        }
-        const styleSheet = document.createElement("style");
-        styleSheet.innerText = `@keyframes shimmer { 0% { left: -100%; } 100% { left: 200%; } } .shake { animation: shake 0.5s; } @keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); } 20%, 40%, 60%, 80% { transform: translateX(5px); } }`;
-        document.head.appendChild(styleSheet);
-    </script>
-</body>
-</html>
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));

@@ -76,6 +76,19 @@ let usuario = JSON.parse(localStorage.getItem('openpix_user')) || null;
 let historico = JSON.parse(localStorage.getItem('openpix_history')) || [];
 let tokenVitoriaAtual = "";
 
+const confettiCanvas = document.getElementById('confetti-canvas');
+const confettiCtx = confettiCanvas ? confettiCanvas.getContext('2d') : null;
+let confettiParticles = [];
+let confettiAnimationId = null;
+
+function resizeConfetti() {
+    if (!confettiCanvas) return;
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeConfetti);
+resizeConfetti();
+
 // --- INTERFACE ---
 function fecharModal(id) { document.getElementById(id).classList.add('hidden'); }
 
@@ -202,6 +215,116 @@ function formatarValorBR(valor) {
     return Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function atualizarNivelUsuario() {
+    const totalTentativas = historico.length;
+    const nivelEl = document.getElementById('nivel-usuario');
+    const descricaoEl = document.getElementById('nivel-descricao');
+    const badgeEl = document.getElementById('nivel-badge');
+    if (!nivelEl || !descricaoEl || !badgeEl) return;
+
+    let nivel = 'Iniciante';
+    let descricao = 'Complete mais tentativas para subir de nível.';
+    let badge = totalTentativas;
+
+    if (totalTentativas >= 15 && totalTentativas < 40) {
+        nivel = 'Avançado';
+        descricao = 'Você já está acima da média. Continue!';
+    } else if (totalTentativas >= 40) {
+        nivel = 'Elite';
+        descricao = 'Você está no topo do jogo. Hora de vencer!';
+    }
+
+    nivelEl.textContent = nivel;
+    descricaoEl.textContent = descricao;
+    badgeEl.textContent = `${badge} tentativas`;
+}
+
+function atualizarListaTopVencedores(vencedores) {
+    const lista = document.getElementById('lista-top-vencedores');
+    if (!lista) return;
+    lista.innerHTML = '';
+
+    if (!vencedores.length) {
+        const vazio = document.createElement('p');
+        vazio.className = 'text-center text-xs text-slate-500';
+        vazio.textContent = 'Nenhum vencedor hoje.';
+        lista.appendChild(vazio);
+        return;
+    }
+
+    vencedores.forEach((vencedor, index) => {
+        const item = document.createElement('div');
+        item.className = 'flex justify-between items-center text-xs';
+
+        const nome = document.createElement('div');
+        nome.innerHTML = `<span class="text-yellow-400 font-bold mr-2">#${index + 1}</span>`;
+        nome.appendChild(document.createTextNode(vencedor.nome));
+
+        const valor = document.createElement('div');
+        valor.className = 'text-green-400 font-bold';
+        valor.textContent = `R$ ${formatarValorBR(vencedor.valor)}`;
+
+        item.appendChild(nome);
+        item.appendChild(valor);
+        lista.appendChild(item);
+    });
+}
+
+function iniciarFAQ() {
+    const toggles = document.querySelectorAll('.faq-toggle');
+    toggles.forEach(toggle => {
+        toggle.addEventListener('click', () => {
+            const panel = toggle.nextElementSibling;
+            const isOpen = panel && panel.classList.contains('open');
+            document.querySelectorAll('.faq-panel').forEach(p => p.classList.remove('open'));
+            document.querySelectorAll('.faq-toggle').forEach(t => t.classList.remove('active'));
+            if (panel && !isOpen) {
+                panel.classList.add('open');
+                toggle.classList.add('active');
+            }
+        });
+    });
+}
+
+function iniciarConfete() {
+    if (!confettiCanvas || !confettiCtx) return;
+    confettiParticles = Array.from({ length: 120 }).map(() => ({
+        x: Math.random() * confettiCanvas.width,
+        y: Math.random() * confettiCanvas.height - confettiCanvas.height,
+        r: Math.random() * 6 + 4,
+        d: Math.random() * 2 + 1,
+        color: `hsl(${Math.random() * 360}, 80%, 60%)`,
+        tilt: Math.random() * 10 - 5
+    }));
+
+    const start = performance.now();
+    const duration = 3000;
+
+    function drawConfetti(timestamp) {
+        const elapsed = timestamp - start;
+        confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        confettiParticles.forEach(p => {
+            confettiCtx.beginPath();
+            confettiCtx.lineWidth = p.r;
+            confettiCtx.strokeStyle = p.color;
+            confettiCtx.moveTo(p.x + p.tilt, p.y);
+            confettiCtx.lineTo(p.x, p.y + p.tilt + p.r);
+            confettiCtx.stroke();
+            p.y += p.d * 3;
+            p.x += Math.sin(p.y * 0.02);
+        });
+
+        if (elapsed < duration) {
+            confettiAnimationId = requestAnimationFrame(drawConfetti);
+        } else {
+            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            if (confettiAnimationId) cancelAnimationFrame(confettiAnimationId);
+        }
+    }
+
+    confettiAnimationId = requestAnimationFrame(drawConfetti);
+}
+
 function destacarPremio() {
     const premioEl = document.getElementById('premio');
     if (!premioEl) return;
@@ -272,6 +395,9 @@ async function atualizarStatusPublico() {
         }
         if (Array.isArray(dados.ultimosGanhadores)) {
             atualizarListaVencedores(dados.ultimosGanhadores);
+        }
+        if (Array.isArray(dados.topVencedoresDia)) {
+            atualizarListaTopVencedores(dados.topVencedoresDia);
         }
     } catch (erro) {
         console.warn('Falha ao atualizar status público:', erro);
@@ -361,6 +487,7 @@ async function iniciarHack() {
 
     historico.push({ senha: senhaTentativa, ganhou: data.ganhou, data: new Date().toLocaleString('pt-BR') });
     localStorage.setItem('openpix_history', JSON.stringify(historico));
+    atualizarNivelUsuario();
 
     if (data.ganhou) {
         play(sfx.win);
@@ -374,6 +501,9 @@ async function iniciarHack() {
         $('#valor-vitoria').text(data.premio.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
         $('#token-vitoria').text(tokenVitoriaAtual);
         if (usuario && usuario.nome) {
+            $('#nome-vitoria').text(usuario.nome);
+        }
+        if (usuario && usuario.nome) {
             fetch('/registrar-ganhador', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -384,6 +514,7 @@ async function iniciarHack() {
                 })
             });
         }
+        iniciarConfete();
         setTimeout(() => { document.getElementById('modal-vitoria').classList.remove('hidden'); }, 1000);
 
     } else {
@@ -486,3 +617,5 @@ setInterval(atualizarStatusPublico, 5000);
 iniciarRelogioStatus();
 atualizarAtividadeAoVivo();
 setInterval(atualizarAtividadeAoVivo, 4500);
+atualizarNivelUsuario();
+iniciarFAQ();

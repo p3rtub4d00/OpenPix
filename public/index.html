@@ -50,8 +50,11 @@
                 <span class="text-[9px] uppercase tracking-widest text-slate-300 font-bold">Prêmio Acumulado</span>
             </div>
             <div class="text-6xl font-mono font-black text-green-400 tracking-tighter drop-shadow-[0_0_15px_rgba(74,222,128,0.3)]">
-                R$ <span id="premio">1.500,50</span>
+                R$ <span id="premio" class="premio-glow">1.500,50</span>
             </div>
+            <p class="text-[10px] text-slate-500 mt-2 uppercase tracking-widest">
+                Atualizado <span id="status-atualizado">agora</span>
+            </p>
         </div>
 
         <div class="input-display p-4 rounded-xl mb-6 relative">
@@ -83,6 +86,62 @@
             <p class="text-center text-xs text-slate-500">Carregando vencedores...</p>
         </div>
     </div>
+
+    <section class="w-[95%] max-w-md z-10 my-6 bg-black/60 border border-white/10 rounded-2xl p-4 backdrop-blur-sm">
+        <h3 class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest mb-4 text-center flex items-center justify-center gap-2 border-b border-white/5 pb-2">
+            <i class="fas fa-bolt"></i> Atividade ao Vivo
+        </h3>
+        <div id="atividade-ao-vivo" class="space-y-3 text-xs text-slate-300 font-mono"></div>
+    </section>
+
+    <section class="w-[95%] max-w-md z-10 my-6 bg-black/60 border border-white/10 rounded-2xl p-4 backdrop-blur-sm">
+        <h3 class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest mb-4 text-center flex items-center justify-center gap-2 border-b border-white/5 pb-2">
+            <i class="fas fa-shield-alt"></i> Como Funciona
+        </h3>
+        <div class="grid grid-cols-1 gap-3 text-xs text-slate-300">
+            <div class="flex gap-3 items-start bg-black/40 border border-white/5 rounded-xl p-3">
+                <span class="text-yellow-400 font-black">1.</span>
+                <div>
+                    <p class="font-bold text-white">Informe seus dados</p>
+                    <p class="text-[10px] text-slate-400">Cadastro rápido para validar as tentativas.</p>
+                </div>
+            </div>
+            <div class="flex gap-3 items-start bg-black/40 border border-white/5 rounded-xl p-3">
+                <span class="text-yellow-400 font-black">2.</span>
+                <div>
+                    <p class="font-bold text-white">Digite a senha</p>
+                    <p class="text-[10px] text-slate-400">A cada erro, o prêmio aumenta automaticamente.</p>
+                </div>
+            </div>
+            <div class="flex gap-3 items-start bg-black/40 border border-white/5 rounded-xl p-3">
+                <span class="text-yellow-400 font-black">3.</span>
+                <div>
+                    <p class="font-bold text-white">Ganhe e solicite o saque</p>
+                    <p class="text-[10px] text-slate-400">Receba o token e informe sua chave Pix.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="w-[95%] max-w-md z-10 my-6 bg-black/60 border border-white/10 rounded-2xl p-4 backdrop-blur-sm">
+        <h3 class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest mb-4 text-center flex items-center justify-center gap-2 border-b border-white/5 pb-2">
+            <i class="fas fa-question-circle"></i> Dúvidas Frequentes
+        </h3>
+        <div class="space-y-3 text-xs text-slate-300">
+            <div class="bg-black/40 border border-white/5 rounded-xl p-3">
+                <p class="font-bold text-white">O prêmio muda sozinho?</p>
+                <p class="text-[10px] text-slate-400">Sim. O valor é atualizado em tempo real a cada tentativa.</p>
+            </div>
+            <div class="bg-black/40 border border-white/5 rounded-xl p-3">
+                <p class="font-bold text-white">Como recebo o saque?</p>
+                <p class="text-[10px] text-slate-400">Ao vencer, copie o token e informe sua chave Pix para processarmos.</p>
+            </div>
+            <div class="bg-black/40 border border-white/5 rounded-xl p-3">
+                <p class="font-bold text-white">Posso comprar dicas?</p>
+                <p class="text-[10px] text-slate-400">Sim. As dicas aumentam suas chances e revelam números da senha.</p>
+            </div>
+        </div>
+    </section>
 
     <footer class="text-center w-full max-w-md px-4 pb-8 opacity-50 z-10 relative text-[10px] text-slate-600">
         <p>© 2026 OpenPix Security.<br>Termos de Uso • Privacidade</p>

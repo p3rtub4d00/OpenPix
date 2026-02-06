@@ -52,6 +52,36 @@ body {
 }
 @keyframes typing { from { width: 0 } to { width: 100% } }
 
+.premio-glow {
+    animation: premioPulse 3s ease-in-out infinite;
+}
+.premio-highlight {
+    animation: premioHighlight 1.2s ease-out;
+}
+@keyframes premioPulse {
+    0%, 100% { text-shadow: 0 0 12px rgba(74, 222, 128, 0.2); }
+    50% { text-shadow: 0 0 22px rgba(74, 222, 128, 0.6); }
+}
+@keyframes premioHighlight {
+    0% { text-shadow: 0 0 6px rgba(234, 179, 8, 0.2); }
+    50% { text-shadow: 0 0 26px rgba(234, 179, 8, 0.9); }
+    100% { text-shadow: 0 0 12px rgba(74, 222, 128, 0.3); }
+}
+
+.atividade-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 10px 12px;
+}
+.atividade-item span {
+    font-size: 11px;
+}
+
 /* Animações Úteis */
 .shake { animation: shake 0.5s; }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }

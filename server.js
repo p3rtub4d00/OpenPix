@@ -4,19 +4,26 @@ const fs = require('fs');
 const path = require('path');
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // Para ler formulários
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// --- CONFIGURAÇÕES DO DONO ---
-const SENHA_ADMIN = "admin123"; // <--- SUA SENHA AQUI
+// --- CONFIGURAÇÕES E BANCO DE DADOS ---
+const SENHA_ADMIN = "admin123"; 
 const ARQUIVO_LEADS = 'leads.json';
 const ARQUIVO_FINANCEIRO = 'financeiro.json';
+const ARQUIVO_CONFIG = 'config.json'; // Onde salvaremos a senha do cofre
 
-let cofre = {
+// Inicializa a configuração se não existir
+let configCofre = {
     premioAtual: 500.30,
-    senhaCorreta: "1234",
-    tentativas: 0
+    senhaCorreta: "1234" // Senha padrão inicial
 };
+
+if (fs.existsSync(ARQUIVO_CONFIG)) {
+    configCofre = JSON.parse(fs.readFileSync(ARQUIVO_CONFIG));
+} else {
+    fs.writeFileSync(ARQUIVO_CONFIG, JSON.stringify(configCofre, null, 2));
+}
 
 // --- FUNÇÕES AUXILIARES ---
 function lerArquivo(arquivo) {
@@ -32,167 +39,126 @@ function salvarArquivo(arquivo, dados) {
 
 // --- ROTAS DO JOGO ---
 
-// 1. Salvar Lead (Cadastro)
 app.post('/salvar-lead', (req, res) => {
-    const novoUsuario = req.body;
-    novoUsuario.data = new Date().toLocaleString('pt-BR');
-    
-    let leads = lerArquivo(ARQUIVO_LEADS);
-    leads.push(novoUsuario);
+    const leads = lerArquivo(ARQUIVO_LEADS);
+    leads.push({ ...req.body, data: new Date().toLocaleString('pt-BR') });
     salvarArquivo(ARQUIVO_LEADS, leads);
-    
     res.json({ status: "ok" });
 });
 
-// 2. Registrar Venda (Quando escolhe o plano)
 app.post('/registrar-venda', (req, res) => {
-    const { valor, plano } = req.body;
-    const venda = {
-        data: new Date().toLocaleString('pt-BR'),
-        valor: parseFloat(valor),
-        plano: plano
-    };
-
-    let vendas = lerArquivo(ARQUIVO_FINANCEIRO);
-    vendas.push(venda);
+    const vendas = lerArquivo(ARQUIVO_FINANCEIRO);
+    vendas.push({ ...req.body, data: new Date().toLocaleString('pt-BR') });
     salvarArquivo(ARQUIVO_FINANCEIRO, vendas);
-
     res.json({ status: "ok" });
 });
 
-// 3. Tentativa de abrir
 app.post('/tentar', (req, res) => {
     const { senha } = req.body;
-    cofre.tentativas++;
     
-    if (senha === cofre.senhaCorreta) {
-        res.json({ ganhou: true, premio: cofre.premioAtual });
+    if (senha === configCofre.senhaCorreta) {
+        res.json({ ganhou: true, premio: configCofre.premioAtual });
     } else {
-        cofre.premioAtual += 0.50; 
-        res.json({ ganhou: false, msg: "Senha incorreta", novoPremio: cofre.premioAtual });
+        configCofre.premioAtual += 0.50; 
+        salvarArquivo(ARQUIVO_CONFIG, configCofre); // Salva o novo prêmio acumulado
+        res.json({ ganhou: false, msg: "Incorreta", novoPremio: configCofre.premioAtual });
+    }
+});
+
+// --- ROTA PARA MUDAR A SENHA (POST) ---
+app.post('/admin-mudar-senha', (req, res) => {
+    const { senha_admin, nova_senha_cofre } = req.body;
+
+    if (senha_admin === SENHA_ADMIN) {
+        if (nova_senha_cofre.length === 4) {
+            configCofre.senhaCorreta = nova_senha_cofre;
+            salvarArquivo(ARQUIVO_CONFIG, configCofre);
+            res.redirect(307, '/admin-dashboard'); // Recarrega o painel
+        } else {
+            res.send("Erro: A senha do cofre deve ter 4 números.");
+        }
+    } else {
+        res.send("Senha Admin Incorreta.");
     }
 });
 
 // --- ÁREA RESTRITA (ADMIN) ---
 
-// Tela de Login
 app.get('/admin', (req, res) => {
     res.send(`
-        <!DOCTYPE html>
-        <html class="bg-slate-900">
-        <head><meta charset="UTF-8"><script src="https://cdn.tailwindcss.com"></script></head>
+        <html class="bg-slate-900"><head><meta charset="UTF-8"><script src="https://cdn.tailwindcss.com"></script></head>
         <body class="flex items-center justify-center h-screen">
-            <form action="/admin-dashboard" method="POST" class="bg-slate-800 p-8 rounded-xl shadow-2xl border border-slate-700 text-center">
-                <h1 class="text-2xl font-bold text-yellow-500 mb-4">🔐 Área Restrita</h1>
-                <input type="password" name="senha" placeholder="Digite a senha" class="w-full p-3 rounded bg-slate-900 text-white border border-slate-600 mb-4 focus:border-yellow-500 outline-none">
-                <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded transition">ENTRAR</button>
+            <form action="/admin-dashboard" method="POST" class="bg-slate-800 p-8 rounded-xl border border-slate-700">
+                <h1 class="text-2xl font-bold text-yellow-500 mb-4">🔐 Login do Dono</h1>
+                <input type="password" name="senha" placeholder="Senha do Painel" class="w-full p-3 rounded bg-slate-900 text-white mb-4 outline-none border border-slate-600 focus:border-yellow-500">
+                <button class="w-full bg-yellow-600 py-2 rounded font-bold">ENTRAR</button>
             </form>
-        </body>
-        </html>
+        </body></html>
     `);
 });
 
-// Dashboard (Protegido por Senha)
 app.post('/admin-dashboard', (req, res) => {
     const { senha } = req.body;
+    if (senha !== SENHA_ADMIN) return res.send("Acesso Negado.");
 
-    if (senha !== SENHA_ADMIN) {
-        return res.send('<h1 style="color:red; text-align:center; margin-top:50px;">SENHA INCORRETA ❌ <br><a href="/admin">Voltar</a></h1>');
-    }
-
-    // Carregar Dados
     const leads = lerArquivo(ARQUIVO_LEADS);
     const vendas = lerArquivo(ARQUIVO_FINANCEIRO);
-    
-    // Calcular Totais
-    const totalLeads = leads.length;
-    const totalFaturado = vendas.reduce((acc, item) => acc + (item.valor || 0), 0);
-    const ticketMedio = totalFaturado / (vendas.length || 1);
+    const totalFaturado = vendas.reduce((acc, v) => acc + (parseFloat(v.valor) || 0), 0);
 
-    // Gerar HTML do Dashboard
-    let html = `
+    res.send(`
     <!DOCTYPE html>
     <html lang="pt-br">
-    <head>
-        <meta charset="UTF-8">
-        <title>Painel do Dono | OpenPix</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-    </head>
-    <body class="bg-slate-900 text-white min-h-screen p-6">
-        
-        <header class="flex justify-between items-center mb-8 border-b border-slate-700 pb-4">
-            <h1 class="text-3xl font-black text-yellow-500 tracking-tighter">OPEN<span class="text-white">PIX</span> <span class="text-sm text-slate-500 font-normal ml-2">| Painel do Dono</span></h1>
-            <a href="/admin" class="text-red-400 hover:text-red-300 text-sm font-bold">SAIR</a>
-        </header>
+    <head><meta charset="UTF-8"><script src="https://cdn.tailwindcss.com"></script></head>
+    <body class="bg-slate-900 text-white p-6">
+        <div class="max-w-6xl mx-auto">
+            <header class="flex justify-between items-center mb-10 border-b border-slate-700 pb-4">
+                <h1 class="text-3xl font-black text-yellow-500">PAINEL <span class="text-white">DESTRAVA CELL</span></h1>
+                <a href="/admin" class="text-red-500 text-sm">SAIR</a>
+            </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div class="bg-slate-800 p-6 rounded-2xl border border-green-500/30 shadow-lg shadow-green-900/20">
-                <div class="text-slate-400 text-xs uppercase font-bold tracking-widest mb-2">Faturamento Total</div>
-                <div class="text-4xl font-mono font-black text-green-400">R$ ${totalFaturado.toFixed(2)}</div>
-                <div class="text-xs text-slate-500 mt-2">${vendas.length} transações realizadas</div>
-            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                <div class="bg-slate-800 p-6 rounded-2xl border border-yellow-500/50">
+                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2">⚙️ Configuração do Cofre</h2>
+                    <div class="mb-4">
+                        <span class="text-slate-400 text-sm">Senha Atual do Cofre:</span>
+                        <span class="text-2xl font-mono font-bold text-yellow-500 ml-2">${configCofre.senhaCorreta}</span>
+                    </div>
+                    <form action="/admin-mudar-senha" method="POST" class="space-y-4">
+                        <input type="hidden" name="senha_admin" value="${senha}">
+                        <div>
+                            <label class="block text-xs text-slate-500 mb-1">NOVA SENHA (4 DÍGITOS)</label>
+                            <input type="text" name="nova_senha_cofre" maxlength="4" placeholder="Ex: 5588" class="w-full p-2 rounded bg-slate-900 border border-slate-600 outline-none focus:border-yellow-500">
+                        </div>
+                        <button class="w-full bg-yellow-600 hover:bg-yellow-500 text-black font-black py-2 rounded transition">ATUALIZAR SENHA</button>
+                    </form>
+                </div>
 
-            <div class="bg-slate-800 p-6 rounded-2xl border border-blue-500/30">
-                <div class="text-slate-400 text-xs uppercase font-bold tracking-widest mb-2">Total de Leads</div>
-                <div class="text-4xl font-mono font-black text-blue-400">${totalLeads}</div>
-                <div class="text-xs text-slate-500 mt-2">Pessoas cadastradas</div>
-            </div>
-
-            <div class="bg-slate-800 p-6 rounded-2xl border border-yellow-500/30">
-                <div class="text-slate-400 text-xs uppercase font-bold tracking-widest mb-2">Ticket Médio</div>
-                <div class="text-4xl font-mono font-black text-yellow-500">R$ ${ticketMedio.toFixed(2)}</div>
-                <div class="text-xs text-slate-500 mt-2">Valor médio por venda</div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div class="bg-slate-800 rounded-xl overflow-hidden shadow-xl border border-slate-700">
-                <div class="bg-slate-700/50 p-4 font-bold text-blue-300 border-b border-slate-700">📋 Últimos Cadastros</div>
-                <div class="max-h-96 overflow-y-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-700 text-slate-300 sticky top-0">
-                            <tr><th class="p-3 text-xs">Data</th><th class="p-3 text-xs">Nome</th><th class="p-3 text-xs">WhatsApp</th></tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-700 text-sm">
-                            ${leads.reverse().map(l => `
-                                <tr class="hover:bg-white/5">
-                                    <td class="p-3 text-slate-400 text-xs">${l.data.split(' ')[0]}</td>
-                                    <td class="p-3 font-bold">${l.nome}</td>
-                                    <td class="p-3 text-green-400 font-mono">${l.tel}</td>
-                                </tr>
-                            `).join('') || '<tr><td colspan="3" class="p-4 text-center text-slate-500">Nada ainda...</td></tr>'}
-                        </tbody>
-                    </table>
+                <div class="bg-slate-800 p-6 rounded-2xl border border-green-500/50">
+                    <h2 class="text-xl font-bold mb-4">💰 Resumo Financeiro</h2>
+                    <div class="text-4xl font-mono font-black text-green-400">R$ ${totalFaturado.toFixed(2)}</div>
+                    <p class="text-slate-500 text-sm mt-2">${vendas.length} vendas realizadas</p>
+                    <p class="text-slate-500 text-sm italic mt-4">Prêmio Atual no Cofre: R$ ${configCofre.premioAtual.toFixed(2)}</p>
                 </div>
             </div>
 
-            <div class="bg-slate-800 rounded-xl overflow-hidden shadow-xl border border-slate-700">
-                <div class="bg-slate-700/50 p-4 font-bold text-green-300 border-b border-slate-700">💸 Últimas Vendas</div>
-                <div class="max-h-96 overflow-y-auto">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-700 text-slate-300 sticky top-0">
-                            <tr><th class="p-3 text-xs">Data</th><th class="p-3 text-xs">Plano</th><th class="p-3 text-xs text-right">Valor</th></tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-700 text-sm">
-                             ${vendas.reverse().map(v => `
-                                <tr class="hover:bg-white/5">
-                                    <td class="p-3 text-slate-400 text-xs">${v.data}</td>
-                                    <td class="p-3 font-bold">${v.plano || 'Chance Única'}</td>
-                                    <td class="p-3 text-green-400 font-mono text-right font-bold">+ R$ ${v.valor.toFixed(2)}</td>
-                                </tr>
-                            `).join('') || '<tr><td colspan="3" class="p-4 text-center text-slate-500">Sem vendas.</td></tr>'}
-                        </tbody>
-                    </table>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+                    <div class="p-4 bg-slate-700/50 font-bold">📋 Últimos Leads (${leads.length})</div>
+                    <div class="max-h-60 overflow-y-auto p-4 space-y-2">
+                        ${leads.reverse().map(l => `<div class="text-sm bg-slate-900 p-2 rounded flex justify-between"><span>${l.nome}</span><span class="text-green-400">${l.tel}</span></div>`).join('') || 'Sem leads'}
+                    </div>
+                </div>
+                <div class="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+                    <div class="p-4 bg-slate-700/50 font-bold">💸 Últimas Vendas</div>
+                    <div class="max-h-60 overflow-y-auto p-4 space-y-2">
+                        ${vendas.reverse().map(v => `<div class="text-sm bg-slate-900 p-2 rounded flex justify-between"><span>${v.plano}</span><span class="text-yellow-500">R$ ${parseFloat(v.valor).toFixed(2)}</span></div>`).join('') || 'Sem vendas'}
+                    </div>
                 </div>
             </div>
         </div>
-
-    </body>
-    </html>
-    `;
-    
-    res.send(html);
+    </body></html>
+    `);
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+app.listen(PORT, () => console.log(`Rodando em: http://localhost:${PORT}`));

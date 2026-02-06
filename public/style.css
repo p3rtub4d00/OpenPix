@@ -82,6 +82,77 @@ body {
     font-size: 11px;
 }
 
+.beneficio-card {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    text-align: center;
+}
+
+.nivel-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.nivel-badge {
+    background: rgba(234, 179, 8, 0.2);
+    color: #facc15;
+    border: 1px solid rgba(234, 179, 8, 0.4);
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-weight: 700;
+}
+
+.faq-toggle {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 12px;
+    color: #e2e8f0;
+    font-weight: 700;
+    text-align: left;
+}
+
+.faq-toggle i {
+    transition: transform 0.3s ease;
+}
+
+.faq-toggle.active i {
+    transform: rotate(180deg);
+}
+
+.faq-panel {
+    display: none;
+    padding: 10px 12px 14px;
+    margin-top: -6px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 0 0 12px 12px;
+    color: #94a3b8;
+}
+
+.faq-panel.open {
+    display: block;
+}
+
+#confetti-canvas {
+    z-index: 30;
+}
+
 /* Animações Úteis */
 .shake { animation: shake 0.5s; }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }

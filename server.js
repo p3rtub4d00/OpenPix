@@ -80,6 +80,29 @@ function notificarTelegram(mensagem) {
     req.end();
 }
 
+function obterConfigCofreAtual() {
+    if (fs.existsSync(ARQUIVO_CONFIG)) {
+        try {
+            return JSON.parse(fs.readFileSync(ARQUIVO_CONFIG));
+        } catch (e) {
+            return configCofre;
+        }
+    }
+    return configCofre;
+}
+
+function obterUltimosGanhadores(quantidade = 3) {
+    const solicitacoes = lerArquivo(ARQUIVO_SOLICITACOES);
+    return solicitacoes
+        .filter(solicitacao => solicitacao.status === "PAGO")
+        .slice(-quantidade)
+        .reverse()
+        .map(solicitacao => ({
+            nome: solicitacao.nome,
+            valor: solicitacao.valor
+        }));
+}
+
 // ===================================================
 // 🚀 ROTAS DO JOGO
 // ===================================================
@@ -177,6 +200,15 @@ app.post('/solicitar-saque', (req, res) => {
     notificarTelegram(`💸 *SOLICITAÇÃO DE SAQUE*\nNome: ${nome}\nValor: R$ ${valor}\nPix: ${pix}`);
     
     res.json({ sucesso: true });
+});
+
+// Status público (prêmio e últimos ganhadores)
+app.get('/status', (req, res) => {
+    const configAtual = obterConfigCofreAtual();
+    res.json({
+        premioAtual: configAtual.premioAtual,
+        ultimosGanhadores: obterUltimosGanhadores()
+    });
 });
 
 // ===================================================

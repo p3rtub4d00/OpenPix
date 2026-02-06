@@ -13,205 +13,151 @@
     
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="text-white flex flex-col items-center min-h-screen overflow-x-hidden relative pb-10">
+<body class="text-white flex flex-col items-center min-h-screen overflow-x-hidden relative pb-10 font-sans">
 
-    <div class="fixed inset-0 z-[-3] bg-[url('fundo-cofre.jpg')] bg-cover bg-center opacity-60"></div>
-
-    <canvas id="matrix-canvas" class="fixed inset-0 z-[-2] opacity-40"></canvas>
-    
-    <div class="fixed inset-0 bg-black/70 z-[-1] backdrop-blur-[2px]"></div>
+    <div class="fixed inset-0 z-[-3] bg-[url('fundo-cofre.jpg')] bg-cover bg-center opacity-50"></div>
+    <canvas id="matrix-canvas" class="fixed inset-0 z-[-2] opacity-60 mix-blend-screen"></canvas>
+    <div class="fixed inset-0 bg-black/80 z-[-1]"></div>
 
     <audio id="sfx-type" src="type.mp3"></audio>
     <audio id="sfx-error" src="error.mp3"></audio>
     <audio id="sfx-win" src="win.mp3"></audio>
 
-    <div class="w-full max-w-md flex justify-between items-center px-4 py-4 z-10">
-        <div class="flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-green-500/30 shadow-lg">
+    <div class="w-full max-w-md flex justify-between items-center px-4 py-4 z-10 opacity-80">
+        <div class="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full border border-white/10">
             <span class="relative flex h-2 w-2">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
             </span>
-            <span class="text-[10px] font-mono text-green-400 font-bold tracking-wider">
-                <span id="contador-online">142</span> CONECTADOS
-            </span>
+            <span class="text-[10px] font-mono text-green-400 font-bold tracking-wider"><span id="contador-online">142</span> ONLINE</span>
         </div>
-        <button onclick="abrirHistorico()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] px-4 py-2 rounded-full transition-all flex items-center gap-2 shadow-lg hover:border-yellow-500/50">
-            <i class="fas fa-history text-yellow-500"></i> MEUS PALPITES
+        <button onclick="abrirHistorico()" class="text-[10px] px-3 py-1 rounded-full border border-white/10 hover:bg-white/10 transition flex items-center gap-2">
+            <i class="fas fa-history text-yellow-500"></i> Histórico
         </button>
     </div>
 
-    <main class="glass-panel p-8 rounded-[2rem] w-[95%] max-w-md text-center relative border-t border-white/20 mt-4 z-10 shadow-[0_0_50px_rgba(0,0,0,0.8)]">
-        
-        <div class="absolute top-4 left-0 w-full flex justify-center opacity-50">
-             <i class="fas fa-lock text-[10px] text-slate-400 mr-1"></i> <span class="text-[8px] uppercase tracking-[0.3em] text-slate-400">Connection Secure</span>
-        </div>
-
-        <header class="mb-6 mt-4">
-            <h1 class="text-5xl font-black tracking-tighter italic drop-shadow-2xl"><span class="text-yellow-500">OPEN</span>PIX</h1>
+    <main class="glass-panel p-8 rounded-3xl w-[95%] max-w-md text-center relative border-t border-white/10 mt-4 z-10 shadow-2xl">
+        <header class="mb-8">
+            <h1 class="text-5xl font-black tracking-tighter italic"><span class="text-yellow-500">OPEN</span>PIX</h1>
+            <p class="text-slate-400 text-[9px] font-bold tracking-[0.3em] uppercase mt-2 flex justify-center items-center gap-2">
+                <i class="fas fa-lock text-green-500"></i> Sistema Seguro Criptografado
+            </p>
         </header>
 
-        <div class="mb-8 relative group">
-            <div class="inline-flex items-center gap-2 bg-black/80 px-4 py-1.5 rounded-full border border-yellow-500/30 mb-2 shadow-lg">
-                <i class="fas fa-sack-dollar text-yellow-400 text-xs animate-pulse"></i>
-                <span class="text-[10px] uppercase tracking-widest text-yellow-100 font-bold">Prêmio Acumulado</span>
+        <div class="mb-8 relative">
+            <div class="inline-flex items-center gap-2 bg-black/50 px-3 py-1 rounded-full border border-yellow-500/20 mb-2">
+                <i class="fas fa-coins text-yellow-500 text-[10px]"></i>
+                <span class="text-[9px] uppercase tracking-widest text-slate-300 font-bold">Prêmio Acumulado</span>
             </div>
-            <div class="relative text-6xl font-mono font-black text-white tracking-tighter drop-shadow-[0_0_15px_rgba(34,197,94,0.6)]">
-                R$ <span id="premio" class="text-green-400">1.500,50</span>
+            <div class="text-6xl font-mono font-black text-green-400 tracking-tighter drop-shadow-[0_0_15px_rgba(74,222,128,0.3)]">
+                R$ <span id="premio">1.500,50</span>
             </div>
-            <p class="text-[9px] text-slate-400 mt-1 uppercase tracking-wider">Disponível para saque imediato</p>
         </div>
 
-        <div class="input-display p-4 rounded-xl mb-6 relative border-l-4 border-yellow-500">
-            <div class="absolute top-2 left-3"><i class="fas fa-key text-slate-600 text-xs"></i></div>
-            <input type="password" id="senha" maxlength="4" placeholder="••••" inputmode="numeric" class="bg-transparent text-center text-5xl font-mono font-bold tracking-[1rem] outline-none w-full text-white placeholder-slate-700 focus:placeholder-transparent transition-all h-16">
+        <div class="input-display p-4 rounded-xl mb-6 relative">
+            <input type="password" id="senha" maxlength="4" placeholder="••••" inputmode="numeric" class="bg-transparent text-center text-5xl font-mono font-bold tracking-[1rem] outline-none w-full text-white placeholder-slate-800 focus:placeholder-transparent transition-all h-16">
         </div>
 
-        <div id="terminal" class="terminal-log rounded-xl mb-6 hidden opacity-0 transition-opacity duration-300 shadow-inner"></div>
+        <div id="terminal" class="terminal-log rounded-xl mb-6 hidden opacity-0 transition-opacity duration-300"></div>
 
-        <button id="btn-acao" onclick="verificarLogin()" class="w-full bg-gradient-to-b from-green-500 to-green-700 text-white font-black text-xl py-4 rounded-xl transition-all active:scale-95 border-b-4 border-green-900 relative overflow-hidden group hover:shadow-[0_0_30px_rgba(34,197,94,0.4)] flex justify-center items-center gap-3">
-            <div class="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-[-20deg] group-hover:animate-[shimmer_1.5s_infinite]"></div>
-            <i class="fas fa-unlock"></i> <span id="btn-texto">TENTAR DESBLOQUEAR</span>
+        <button id="btn-acao" onclick="verificarLogin()" class="w-full bg-gradient-to-b from-yellow-400 to-yellow-600 text-black font-black text-xl py-4 rounded-xl transition-all active:scale-95 border-b-4 border-yellow-800 relative overflow-hidden group hover:shadow-[0_0_25px_rgba(234,179,8,0.4)] flex justify-center items-center gap-2">
+            <i class="fas fa-unlock-alt"></i> <span id="btn-texto">TENTAR DESBLOQUEAR</span>
         </button>
 
-        <button onclick="abrirDicas()" class="mt-4 text-slate-300 hover:text-white text-xs font-bold tracking-widest transition-all uppercase border border-slate-600 hover:border-yellow-500 rounded-lg px-4 py-3 flex items-center justify-center gap-2 mx-auto w-full hover:bg-slate-800/50">
-            <i class="fas fa-user-secret text-yellow-500"></i> Comprar Dica Hacker
+        <button onclick="abrirDicas()" class="mt-4 text-yellow-500 hover:text-white text-xs font-black tracking-[0.1em] transition-all uppercase hack-button border border-yellow-500/30 hover:bg-yellow-500/10 hover:border-yellow-500 rounded-lg px-4 py-3 flex items-center justify-center gap-2 mx-auto w-full">
+            <i class="fas fa-user-secret"></i> UTILIZAR FERRAMENTA HACKER
         </button>
     </main>
 
-    <div class="w-[95%] max-w-md flex justify-between items-center mt-6 px-4 opacity-80 grayscale hover:grayscale-0 transition duration-500">
-        <div class="flex flex-col items-center gap-1">
-            <i class="fas fa-shield-alt text-2xl text-slate-400"></i>
-            <span class="text-[8px] uppercase font-bold text-slate-500">Dados<br>Protegidos</span>
-        </div>
-        <div class="flex flex-col items-center gap-1">
-            <i class="fab fa-google text-2xl text-slate-400"></i>
-            <span class="text-[8px] uppercase font-bold text-slate-500">Site<br>Verificado</span>
-        </div>
-        <div class="flex flex-col items-center gap-1">
-            <i class="fas fa-headset text-2xl text-slate-400"></i>
-            <span class="text-[8px] uppercase font-bold text-slate-500">Suporte<br>24 Horas</span>
-        </div>
-        <div class="flex flex-col items-center gap-1">
-            <i class="fab fa-pix text-2xl text-slate-400"></i>
-            <span class="text-[8px] uppercase font-bold text-slate-500">Pix<br>Automático</span>
-        </div>
+    <div class="w-[95%] max-w-md flex justify-center gap-6 text-[9px] text-slate-500 uppercase tracking-wide mt-6 opacity-60">
+        <div class="flex items-center gap-1"><i class="fas fa-shield-alt"></i> Blindado</div>
+        <div class="flex items-center gap-1"><i class="fas fa-lock"></i> SSL 256-bit</div>
+        <div class="flex items-center gap-1"><i class="fab fa-pix"></i> Pix Automático</div>
     </div>
 
-    <div class="w-[95%] max-w-md z-10 my-8 bg-black/40 border border-white/5 rounded-2xl p-4 backdrop-blur-sm">
+    <div class="w-[95%] max-w-md z-10 my-8 bg-black/60 border border-white/10 rounded-2xl p-4 backdrop-blur-sm">
         <h3 class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest mb-4 text-center flex items-center justify-center gap-2 border-b border-white/5 pb-2">
-            <i class="fas fa-star"></i> Hall da Fama (Últimos Ganhadores)
+            <i class="fas fa-trophy"></i> Últimos Grandes Vencedores
         </h3>
-        <div class="space-y-3">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <img src="https://ui-avatars.com/api/?name=Roberto+M&background=22c55e&color=fff&size=32" class="rounded-full shadow-lg">
-                    <div>
-                        <p class="text-xs font-bold text-white">Roberto M.</p>
-                        <p class="text-[9px] text-slate-400">Senha descoberta: <span class="text-green-400 font-mono">8***</span></p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p class="text-green-400 font-bold text-sm">R$ 2.450,00</p>
-                    <p class="text-[9px] text-slate-500">Ontem às 22:15</p>
-                </div>
+        <div class="space-y-3 font-mono">
+            <div class="flex justify-between items-center text-xs">
+                <div><i class="fas fa-check-circle text-green-500 mr-2"></i>Roberto M.</div>
+                <div class="text-green-400 font-bold">R$ 2.450,00</div>
             </div>
-            
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <img src="https://ui-avatars.com/api/?name=Ana+Clara&background=eab308&color=000&size=32" class="rounded-full shadow-lg">
-                    <div>
-                        <p class="text-xs font-bold text-white">Ana Clara</p>
-                        <p class="text-[9px] text-slate-400">Senha descoberta: <span class="text-green-400 font-mono">1***</span></p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p class="text-green-400 font-bold text-sm">R$ 1.890,00</p>
-                    <p class="text-[9px] text-slate-500">Há 2 dias</p>
-                </div>
+            <div class="flex justify-between items-center text-xs">
+                <div><i class="fas fa-check-circle text-green-500 mr-2"></i>Ana Clara</div>
+                <div class="text-green-400 font-bold">R$ 1.890,00</div>
             </div>
-
-            <div class="flex items-center justify-between opacity-75">
-                <div class="flex items-center gap-3">
-                    <img src="https://ui-avatars.com/api/?name=Felipe+S&background=3b82f6&color=fff&size=32" class="rounded-full shadow-lg">
-                    <div>
-                        <p class="text-xs font-bold text-white">Felipe S.</p>
-                        <p class="text-[9px] text-slate-400">Senha descoberta: <span class="text-green-400 font-mono">4***</span></p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p class="text-green-400 font-bold text-sm">R$ 540,00</p>
-                    <p class="text-[9px] text-slate-500">Há 3 dias</p>
-                </div>
+            <div class="flex justify-between items-center text-xs opacity-75">
+                <div><i class="fas fa-check-circle text-green-500 mr-2"></i>Felipe S.</div>
+                <div class="text-green-400 font-bold">R$ 540,00</div>
             </div>
         </div>
     </div>
 
-    <footer class="text-center w-full max-w-md px-4 pb-8 opacity-50 z-10 relative">
-        <p class="text-[9px] text-slate-500">© 2026 OpenPix System Security.<br>Todos os direitos reservados.</p>
+    <footer class="text-center w-full max-w-md px-4 pb-8 opacity-50 z-10 relative text-[10px] text-slate-600">
+        <p>© 2026 OpenPix Security.<br>Termos de Uso • Privacidade</p>
     </footer>
 
     <div id="modal-vitoria" class="fixed inset-0 bg-black/95 z-[90] hidden flex items-center justify-center p-4 backdrop-blur-xl">
-        <div class="bg-gradient-to-b from-yellow-600 to-yellow-800 p-1 rounded-[2rem] w-full max-w-sm shadow-[0_0_50px_rgba(234,179,8,0.5)]">
-            <div class="bg-black rounded-[1.8rem] p-6 text-center relative overflow-hidden">
-                <div class="relative z-10">
-                    <i class="fas fa-trophy text-6xl text-yellow-400 mb-4 animate-bounce"></i>
-                    <h2 class="text-3xl font-black text-white italic mb-2">SENHA CORRETA!</h2>
-                    <p class="text-slate-300 text-xs mb-6">O saldo foi liberado para sua conta.</p>
-                    <div class="bg-slate-900 rounded-xl p-4 mb-6 border border-green-500/50">
-                        <p class="text-slate-400 text-[10px] uppercase tracking-widest">Valor Disponível</p>
-                        <p class="text-4xl font-black text-green-400">R$ <span id="valor-vitoria">0,00</span></p>
-                    </div>
-                    <div class="text-left space-y-3">
-                        <label class="text-xs text-yellow-500 font-bold ml-1">CHAVE PIX PARA RECEBER:</label>
-                        <input type="text" id="pix-vitoria" placeholder="CPF, Email ou Telefone" class="w-full bg-slate-800 border border-yellow-500/50 rounded-xl p-4 text-white outline-none">
-                        <button onclick="solicitarSaque()" class="w-full bg-green-500 hover:bg-green-400 text-black font-black py-4 rounded-xl uppercase shadow-lg mt-2">RECEBER AGORA</button>
-                    </div>
+        <div class="bg-gradient-to-b from-yellow-500 to-yellow-700 p-0.5 rounded-[2rem] w-full max-w-sm shadow-[0_0_50px_rgba(234,179,8,0.3)]">
+            <div class="bg-[#0a0a0a] rounded-[1.9rem] p-6 text-center relative overflow-hidden">
+                <i class="fas fa-trophy text-6xl text-yellow-400 mb-4 animate-bounce drop-shadow-[0_0_15px_rgba(250,204,21,0.8)]"></i>
+                <h2 class="text-3xl font-black text-white italic mb-2">ACESSO LIBERADO!</h2>
+                <p class="text-yellow-500 font-mono text-sm mb-6">SENHA CORRETA CONFIRMADA</p>
+                <div class="bg-black/50 rounded-xl p-4 mb-6 border border-yellow-500/30">
+                    <p class="text-slate-400 text-[10px] uppercase tracking-widest">Valor Disponível</p>
+                    <p class="text-4xl font-black text-green-400">R$ <span id="valor-vitoria">0,00</span></p>
+                </div>
+                <div class="text-left space-y-3">
+                    <input type="text" id="pix-vitoria" placeholder="Sua Chave PIX (CPF/Tel/Email)" class="w-full bg-slate-900 border border-yellow-500/30 rounded-xl p-4 text-white outline-none focus:border-yellow-500 text-center font-bold">
+                    <button onclick="solicitarSaque()" class="w-full bg-green-500 hover:bg-green-400 text-black font-black py-4 rounded-xl uppercase tracking-widest transition-all shadow-lg shadow-green-500/20 mt-2">RECEBER AGORA</button>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="modal-cadastro" class="fixed inset-0 bg-black/90 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-slate-900 border border-slate-700 p-8 rounded-3xl w-full max-w-sm shadow-2xl relative">
-            <h3 class="text-xl font-black text-white mb-2 uppercase flex items-center gap-2"><i class="fas fa-fingerprint text-green-500"></i> Identificação</h3>
-            <p class="text-slate-400 text-xs mb-6">Cadastre-se para validar sua tentativa de saque.</p>
+        <div class="glass-panel p-8 rounded-3xl w-full max-w-sm shadow-2xl relative border-yellow-500/20">
+            <h3 class="text-xl font-black text-white mb-2 uppercase flex items-center gap-2"><i class="fas fa-id-badge text-yellow-500"></i> Identificação</h3>
+            <p class="text-slate-400 text-xs mb-6">Identifique-se para validar suas tentativas.</p>
             <form onsubmit="salvarCadastro(event)" class="space-y-4">
-                <input type="text" id="input-nome" placeholder="Nome Completo" required class="w-full bg-black border border-slate-700 rounded-xl p-3 pl-10 text-white text-sm outline-none focus:border-green-500 transition">
-                <input type="tel" id="input-tel" placeholder="WhatsApp" required class="w-full bg-black border border-slate-700 rounded-xl p-3 pl-10 text-white text-sm outline-none focus:border-green-500 transition">
-                <input type="text" id="input-cpf" placeholder="CPF (Chave Pix)" required class="w-full bg-black border border-slate-700 rounded-xl p-3 pl-10 text-white text-sm outline-none focus:border-green-500 transition">
-                <button class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl transition-all uppercase tracking-widest shadow-lg text-sm mt-2">Continuar</button>
+                <input type="text" id="input-nome" placeholder="Nome Completo" required class="w-full bg-black/50 border border-slate-700 rounded-xl p-3 text-white text-sm outline-none focus:border-yellow-500 transition text-center font-bold">
+                <input type="tel" id="input-tel" placeholder="WhatsApp" required class="w-full bg-black/50 border border-slate-700 rounded-xl p-3 text-white text-sm outline-none focus:border-yellow-500 transition text-center font-bold">
+                <input type="text" id="input-cpf" placeholder="CPF (Chave Pix)" required class="w-full bg-black/50 border border-slate-700 rounded-xl p-3 text-white text-sm outline-none focus:border-yellow-500 transition text-center font-bold">
+                <button class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 rounded-xl transition-all uppercase tracking-widest shadow-lg text-sm mt-2">Salvar Acesso</button>
             </form>
         </div>
     </div>
 
     <div id="modal-planos" class="fixed inset-0 bg-black/90 z-[70] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-slate-900 border border-slate-700 p-6 rounded-[2rem] w-full max-w-sm shadow-2xl relative">
+        <div class="glass-panel p-6 rounded-[2rem] w-full max-w-sm shadow-2xl relative border-yellow-500/20">
             <button onclick="fecharModal('modal-planos')" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
-            <div class="text-center mb-6"><h3 class="text-xl font-black text-white">TENTATIVAS ESGOTADAS</h3><p class="text-slate-400 text-[10px] uppercase tracking-widest mt-1">Adquira mais chances para ganhar o prêmio</p></div>
+            <div class="text-center mb-6"><h3 class="text-xl font-black text-white text-red-500">TENTATIVAS ESGOTADAS</h3><p class="text-slate-400 text-[10px] uppercase tracking-widest mt-1">Adquira mais chances para continuar</p></div>
             <div class="space-y-3">
-                <div onclick="selecionarPlano(1.00, 1, '1 Tentativa')" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700 cursor-pointer hover:bg-slate-700 transition"><span class="font-bold text-sm text-slate-300">1 TENTATIVA</span><span class="text-green-400 font-black">R$ 1,00</span></div>
-                <div onclick="selecionarPlano(5.00, 7, '7 Tentativas')" class="bg-gradient-to-r from-yellow-900/40 to-yellow-800/40 p-4 rounded-xl flex justify-between items-center border border-yellow-500/50 cursor-pointer relative transition shadow-lg hover:scale-[1.02]"><div class="absolute -top-2 right-4 bg-yellow-500 text-black text-[8px] font-black px-2 py-0.5 rounded italic">MAIS VENDIDO</div><span class="font-bold text-sm text-white">7 TENTATIVAS</span><span class="text-yellow-500 font-black">R$ 5,00</span></div>
-                <div onclick="selecionarPlano(10.00, 20, '20 Tentativas')" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700 cursor-pointer hover:bg-slate-700 transition"><span class="font-bold text-sm text-slate-300">20 TENTATIVAS</span><span class="text-green-400 font-black">R$ 10,00</span></div>
+                <div onclick="selecionarPlano(1.00, 1, '1 Tentativa')" class="bg-black/50 p-4 rounded-xl flex justify-between items-center border border-white/10 cursor-pointer hover:bg-white/5 transition"><span class="font-bold text-sm text-slate-300">1 TENTATIVA</span><span class="text-yellow-500 font-black">R$ 1,00</span></div>
+                <div onclick="selecionarPlano(5.00, 7, '7 Tentativas')" class="bg-gradient-to-r from-yellow-900/40 to-black p-4 rounded-xl flex justify-between items-center border border-yellow-500/50 cursor-pointer relative transition shadow-lg shadow-yellow-500/5 hover:scale-[1.02]"><div class="absolute -top-2 right-4 bg-yellow-500 text-black text-[8px] font-black px-2 py-0.5 rounded italic shadow-md">RECOMENDADO</div><span class="font-bold text-sm text-white">7 TENTATIVAS</span><span class="text-yellow-500 font-black">R$ 5,00</span></div>
+                <div onclick="selecionarPlano(10.00, 20, '20 Tentativas')" class="bg-black/50 p-4 rounded-xl flex justify-between items-center border border-white/10 cursor-pointer hover:bg-white/5 transition"><span class="font-bold text-sm text-slate-300">20 TENTATIVAS</span><span class="text-yellow-500 font-black">R$ 10,00</span></div>
             </div>
         </div>
     </div>
 
     <div id="modal-dicas" class="fixed inset-0 bg-black/90 z-[80] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-slate-900 border border-green-500/30 p-6 rounded-[2rem] w-full max-w-sm shadow-2xl relative">
+        <div class="glass-panel border-yellow-500/30 p-6 rounded-[2rem] w-full max-w-sm shadow-2xl relative">
             <button onclick="fecharModal('modal-dicas')" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
-            <div class="text-center mb-6"><i class="fas fa-code text-green-500 text-3xl mb-2"></i><h3 class="text-xl font-black text-white italic uppercase">DECODIFICADOR</h3></div>
+            <div class="text-center mb-6"><i class="fas fa-user-secret text-yellow-500 text-3xl mb-2"></i><h3 class="text-xl font-black text-white italic uppercase">MENU HACKER</h3></div>
             <div class="space-y-3">
-                <div id="btn-dica-1" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700 cursor-pointer hover:bg-slate-700 transition"><div><div class="text-sm font-bold text-slate-200">1º NÚMERO</div><div class="text-[9px] text-slate-500">Elimina 90% das opções</div></div><span id="val-dica-1" class="text-green-400 font-black text-sm">--</span></div>
-                <div id="btn-dica-2" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700 cursor-pointer hover:bg-slate-700 transition"><div><div class="text-sm font-bold text-slate-200">2 NÚMEROS</div><div class="text-[9px] text-slate-500">Elimina 99% das opções</div></div><span id="val-dica-2" class="text-green-400 font-black text-sm">--</span></div>
-                <div id="btn-dica-3" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-yellow-500/30 cursor-pointer hover:bg-slate-700 transition shadow-[0_0_15px_rgba(234,179,8,0.1)]"><div><div class="text-sm font-bold text-yellow-500">3 NÚMEROS</div><div class="text-[9px] text-yellow-500/70">VITÓRIA QUASE CERTA</div></div><span id="val-dica-3" class="text-yellow-400 font-black text-sm">--</span></div>
+                <div id="btn-dica-1" class="bg-black/50 p-4 rounded-xl flex justify-between items-center border border-white/10 cursor-pointer hover:bg-white/5 transition-all group"><div><div class="text-sm font-bold text-slate-200 group-hover:text-yellow-400 transition">REVELAR 1º NÚMERO</div><div class="text-[9px] text-slate-500">Aumenta chance em 10x</div></div><span id="val-dica-1" class="text-green-400 font-black text-sm">--</span></div>
+                <div id="btn-dica-2" class="bg-black/50 p-4 rounded-xl flex justify-between items-center border border-white/10 cursor-pointer hover:bg-white/5 transition-all group"><div><div class="text-sm font-bold text-slate-200 group-hover:text-yellow-400 transition">REVELAR 2 NÚMEROS</div><div class="text-[9px] text-slate-500">Aumenta chance em 100x</div></div><span id="val-dica-2" class="text-green-400 font-black text-sm">--</span></div>
+                <div id="btn-dica-3" class="bg-black/60 p-4 rounded-xl flex justify-between items-center border border-yellow-500/50 cursor-pointer hover:bg-black/80 transition-all group shadow-[0_0_15px_rgba(234,179,8,0.1)]"><div><div class="text-sm font-bold text-yellow-500">REVELAR 3 NÚMEROS</div><div class="text-[9px] text-yellow-500/70">PRÊMIO PRATICAMENTE GARANTIDO</div></div><span id="val-dica-3" class="text-yellow-400 font-black text-sm">--</span></div>
             </div>
         </div>
     </div>
 
     <div id="modal-historico" class="fixed inset-0 bg-black/90 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-slate-900 border border-slate-700 p-6 rounded-3xl w-full max-w-sm h-[400px] flex flex-col shadow-2xl relative">
+        <div class="glass-panel p-6 rounded-3xl w-full max-w-sm h-[400px] flex flex-col shadow-2xl relative border-yellow-500/20">
             <button onclick="fecharModal('modal-historico')" class="absolute top-4 right-4 text-slate-500 hover:text-white"><i class="fas fa-times"></i></button>
-            <h3 class="text-xl font-black mb-4 flex items-center gap-2 text-white"><i class="fas fa-history text-slate-400"></i> Histórico</h3>
+            <h3 class="text-xl font-black mb-4 flex items-center gap-2 text-white"><i class="fas fa-history text-yellow-500"></i> SEUS PALPITES</h3>
             <div id="lista-historico" class="flex-1 overflow-y-auto space-y-2 pr-2 custom-scrollbar"></div>
         </div>
     </div>

@@ -1,3 +1,4 @@
+// --- CONFIGURAÇÃO DE SONS ---
 const sfx = {
     type: document.getElementById('sfx-type'),
     error: document.getElementById('sfx-error'),
@@ -10,21 +11,63 @@ function play(sound) {
     if (sound) { sound.currentTime = 0; sound.play().catch(() => {}); }
 }
 
-// --- MÁSCARAS ---
+// --- EFEITO VIBRAR (Haptic Feedback) ---
+function vibrar(ms = 50) {
+    if (navigator.vibrate) navigator.vibrate(ms);
+}
+
+// --- EFEITO MATRIX (BACKGROUND) ---
+const canvas = document.getElementById('matrix-canvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+const chars = '01ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&';
+const fontSize = 14;
+const columns = canvas.width / fontSize;
+const drops = Array(Math.floor(columns)).fill(1);
+
+function drawMatrix() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.fillStyle = '#0F0';
+    ctx.font = fontSize + 'px monospace';
+    
+    for (let i = 0; i < drops.length; i++) {
+        const text = chars.charAt(Math.floor(Math.random() * chars.length));
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        
+        if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+            drops[i] = 0;
+        }
+        drops[i]++;
+    }
+}
+setInterval(drawMatrix, 40);
+
+// --- MÁSCARAS E INICIALIZAÇÃO ---
 $(document).ready(() => {
     $('#input-tel').mask('(00) 00000-0000');
     $('#input-cpf').mask('000.000.000-00');
+    atualizarRanking(); // Inicia o ranking fake
 });
 
 // --- DADOS ---
 let usuario = JSON.parse(localStorage.getItem('openpix_user')) || null;
 let historico = JSON.parse(localStorage.getItem('openpix_history')) || [];
-let tokenVitoriaAtual = ""; // Variável para guardar o token se o usuário ganhar
+let tokenVitoriaAtual = "";
 
 // --- FUNÇÕES DE UI ---
 function fecharModal(id) { document.getElementById(id).classList.add('hidden'); }
 
 function abrirDicas() {
+    vibrar();
     let textoPremio = $('#premio').text().replace('.', '').replace(',', '.');
     let valorPremio = parseFloat(textoPremio);
 
@@ -44,13 +87,23 @@ function abrirDicas() {
 }
 
 function verificarLogin() {
-    if (document.getElementById('senha').value.length !== 4) return;
+    vibrar();
+    if (document.getElementById('senha').value.length !== 4) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Senha Inválida',
+            text: 'Digite uma senha de 4 dígitos.',
+            confirmButtonColor: '#eab308'
+        });
+        return;
+    }
     if (!usuario) document.getElementById('modal-cadastro').classList.remove('hidden');
     else document.getElementById('modal-planos').classList.remove('hidden');
 }
 
 function salvarCadastro(e) {
     e.preventDefault();
+    vibrar();
     usuario = { nome: $('#input-nome').val(), tel: $('#input-tel').val(), cpf: $('#input-cpf').val() };
     localStorage.setItem('openpix_user', JSON.stringify(usuario));
     
@@ -61,19 +114,23 @@ function salvarCadastro(e) {
     });
 
     fecharModal('modal-cadastro');
+    Swal.fire({
+        icon: 'success',
+        title: 'Acesso Permitido',
+        text: 'Bem-vindo ao sistema OpenPix.',
+        timer: 1500,
+        showConfirmButton: false
+    });
     
-    if ('speechSynthesis' in window) {
-        const speech = new SpeechSynthesisUtterance(`Cadastro confirmado. Bem vindo ao Open Pix.`);
-        speech.lang = 'pt-BR';
-        window.speechSynthesis.speak(speech);
-    }
     document.getElementById('modal-planos').classList.remove('hidden');
 }
 
 function selecionarPlano(valor, chances, plano) {
+    vibrar();
     fecharModal('modal-planos');
-    $('#btn-texto').html('<i class="fas fa-circle-notch fa-spin"></i> GERANDO PIX...');
+    $('#btn-texto').html('<i class="fas fa-circle-notch fa-spin"></i> VALIDANDO...');
     
+    // Simula tempo de processamento
     setTimeout(() => {
         fetch('/registrar-venda', { 
             method: 'POST', 
@@ -86,7 +143,23 @@ function selecionarPlano(valor, chances, plano) {
 
 async function comprarDica(nivel, valor, plano) {
     fecharModal('modal-dicas');
-    if(confirm(`Confirmar investimento de R$ ${valor} para desbloquear o Nível ${nivel}?`)) {
+    
+    // Substituindo confirm nativo pelo SweetAlert2
+    const result = await Swal.fire({
+        title: 'Investir na Dica?',
+        text: `Valor do investimento: R$ ${valor}`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#22c55e',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Sim, hackear!',
+        cancelButtonText: 'Cancelar',
+        background: '#1a1a1a',
+        color: '#fff'
+    });
+
+    if(result.isConfirmed) {
+        vibrar(100);
         const res = await fetch('/comprar-dica', { 
             method: 'POST', 
             headers: {'Content-Type': 'application/json'}, 
@@ -95,10 +168,42 @@ async function comprarDica(nivel, valor, plano) {
         const data = await res.json();
         
         $('#terminal').removeClass('hidden').css('opacity', '1').empty();
-        log(`INJETANDO SCRIPT NÍVEL ${nivel}...`, "#eab308");
+        log(`INJETANDO EXPLOIT NÍVEL ${nivel}...`, "#eab308");
         await new Promise(r => setTimeout(r, 800));
-        log(`ACESSO PARCIAL: [ ${data.dica} ]`, "#fff");
+        log(`ACESSO PARCIAL OBTIDO: [ ${data.dica} ]`, "#fff");
+        
+        Swal.fire({
+            title: 'DICA REVELADA',
+            text: `Os números da senha contém: ${data.dica}`,
+            icon: 'success',
+            background: '#000',
+            color: '#4ade80'
+        });
     }
+}
+
+// --- FUNÇÃO PARA ANIMAR NÚMEROS (CountUp Simples) ---
+function animarValor(elementoId, valorFinal) {
+    const elemento = document.getElementById(elementoId);
+    if (!elemento) return;
+    
+    // Remove R$, pontos e vírgulas para pegar o número puro anterior
+    let valorInicial = parseFloat(elemento.innerText.replace(/[^\d,]/g, '').replace(',', '.'));
+    if (isNaN(valorInicial)) valorInicial = 0;
+    
+    const duracao = 1000; // 1 segundo
+    const inicio = performance.now();
+    
+    requestAnimationFrame(function step(timestamp) {
+        const progresso = (timestamp - inicio) / duracao;
+        if (progresso < 1) {
+            const valorAtual = valorInicial + (valorFinal - valorInicial) * progresso;
+            elemento.innerText = valorAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            requestAnimationFrame(step);
+        } else {
+            elemento.innerText = valorFinal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    });
 }
 
 // --- LÓGICA DO JOGO ---
@@ -110,15 +215,16 @@ async function log(m, c = "#4ade80") {
 }
 
 async function iniciarHack() {
+    vibrar();
     const senhaTentativa = $('#senha').val();
     $('#btn-acao').prop('disabled', true);
     $('#terminal').removeClass('hidden').css('opacity', '1').empty();
     
-    await log(`Validando credenciais...`);
+    await log(`Validando hash criptográfico...`);
     await new Promise(r => setTimeout(r, 600));
-    await log("Conectando ao cofre digital...");
+    await log("Conectando ao mainframe seguro...");
     await new Promise(r => setTimeout(r, 800));
-    await log(`Testando chave: [ ${senhaTentativa} ]`);
+    await log(`Tentativa de quebra bruta: [ ${senhaTentativa} ]`);
     await new Promise(r => setTimeout(r, 1000));
 
     const res = await fetch('/tentar', { 
@@ -134,24 +240,28 @@ async function iniciarHack() {
     if (data.ganhou) {
         // VITÓRIA
         play(sfx.win);
-        tokenVitoriaAtual = data.token; // Salva o token que veio do backend
+        vibrar([200, 100, 200]); // Vibração de vitória
+        tokenVitoriaAtual = data.token;
         
-        await log("ACESSO AUTORIZADO! SAQUE LIBERADO.", "#fbbf24");
+        await log("ACESSO AUTORIZADO! FIREWALL DERRUBADO.", "#fbbf24");
         
-        // Preenche o modal de vitória
         $('#valor-vitoria').text(data.premio.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
         $('#token-vitoria').text(data.token);
         
-        // Abre o modal após 1 segundo
         setTimeout(() => { 
             document.getElementById('modal-vitoria').classList.remove('hidden'); 
+            // Dispara confetes se quiser adicionar depois
         }, 1000);
 
     } else {
         // DERROTA
         play(sfx.error);
-        await log("ERRO: ACESSO NEGADO.", "#ef4444");
+        vibrar(200); // Vibração de erro
+        await log("ERRO: SENHA INCORRETA. ALARME SILENCIOSO.", "#ef4444");
         $('body').addClass('shake');
+        
+        // Anima o novo valor do prêmio
+        animarValor('premio', data.novoPremio);
         
         setTimeout(() => {
             $('body').removeClass('shake');
@@ -159,23 +269,34 @@ async function iniciarHack() {
             $('#senha').val('').prop('disabled', false).focus();
             $('#btn-acao').prop('disabled', false);
             $('#btn-texto').html('<i class="fas fa-unlock-alt"></i> ABRIR COFRE AGORA'); 
-            $('#premio').text(data.novoPremio.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
         }, 1500);
+        
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: 'Senha Incorreta',
+            text: 'O valor do prêmio acumulou!',
+            showConfirmButton: false,
+            timer: 3000,
+            background: '#ef4444',
+            color: '#fff'
+        });
     }
 }
 
 // --- FUNÇÃO PARA SOLICITAR SAQUE ---
 async function solicitarSaque() {
+    vibrar();
     const pix = $('#pix-vitoria').val();
     
     if(!pix) {
-        alert("Por favor, informe a chave PIX.");
+        Swal.fire({ icon: 'error', title: 'Erro', text: 'Informe a Chave PIX.' });
         return;
     }
     
     const valor = parseFloat($('#valor-vitoria').text().replace('.','').replace(',','.'));
     
-    // Envia para o backend
     await fetch('/solicitar-saque', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
@@ -188,15 +309,24 @@ async function solicitarSaque() {
         })
     });
 
-    // Fecha modal vitória e abre confirmação
     document.getElementById('modal-vitoria').classList.add('hidden');
-    document.getElementById('modal-sucesso-saque').classList.remove('hidden');
+    
+    Swal.fire({
+        icon: 'success',
+        title: 'SAQUE PROCESSADO!',
+        html: 'O valor deve cair na sua conta em até <b>10 minutos</b>.',
+        confirmButtonText: 'VOLTAR AO INÍCIO',
+        confirmButtonColor: '#22c55e'
+    }).then(() => {
+        location.reload();
+    });
 }
 
 function abrirHistorico() {
+    vibrar();
     const lista = $('#lista-historico').empty();
     if (!historico.length) {
-        lista.html('<p class="text-center text-slate-600 mt-10 text-xs">Seu histórico está vazio.</p>');
+        lista.html('<p class="text-center text-slate-600 mt-10 text-xs">Sem registros.</p>');
     } else {
         historico.slice().reverse().forEach(h => {
             lista.append(`
@@ -212,41 +342,66 @@ function abrirHistorico() {
     document.getElementById('modal-historico').classList.remove('hidden');
 }
 
-// --- SISTEMA DE NOTIFICAÇÕES (COMPETIÇÃO) ---
+// --- RANKING FAKE E NOTIFICAÇÕES ---
 const contadorEl = document.getElementById('contador-online');
 setInterval(() => {
     let atual = parseInt(contadorEl.innerText);
     let variacao = Math.floor(Math.random() * 5) - 2; 
     let novo = atual + variacao;
     if (novo < 80) novo = 80;
-    if (novo > 350) novo = 350;
+    if (novo > 500) novo = 500;
     contadorEl.innerText = novo;
 }, 3000);
 
-const nomes = ["Ricardo", "Beatriz", "Fernando", "Juliana", "Roberto", "Camila", "André", "Vanessa", "Diego", "Larissa", "Tiago", "Patrícia"];
-const acoes = [
-    { titulo: "Nova Compra!", msg: "acabou de comprar 20 tentativas", cor: "text-green-400" },
-    { titulo: "Atenção!", msg: "investiu na Pista Nível 1", cor: "text-yellow-400" },
-    { titulo: "Quase lá!", msg: "errou por apenas 1 dígito...", cor: "text-red-400" }, 
-    { titulo: "Novo Jogador!", msg: "entrou para disputar o prêmio", cor: "text-blue-400" },
-    { titulo: "Hacker!", msg: "está usando a Pista Nível 2...", cor: "text-purple-400" }
+const nomesRanking = ["João S.", "Maria O.", "Pedro A.", "Lucas F.", "Ana C.", "Carlos M.", "Bruna L."];
+const valoresRanking = [150, 300, 50, 500, 1200, 80];
+
+function gerarGanhadorFake() {
+    const nome = nomesRanking[Math.floor(Math.random() * nomesRanking.length)];
+    const valor = valoresRanking[Math.floor(Math.random() * valoresRanking.length)];
+    const agora = new Date();
+    const tempo = agora.getHours() + ":" + (agora.getMinutes()<10?'0':'') + agora.getMinutes();
+    
+    return `
+        <div class="flex items-center justify-between bg-white/5 p-2 rounded border border-white/5">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-[10px] text-green-500"><i class="fas fa-check"></i></div>
+                <div class="text-[10px] text-slate-300 font-bold">${nome}</div>
+            </div>
+            <div class="text-[10px] text-green-400 font-mono font-bold">+ R$ ${valor},00 <span class="text-slate-600 ml-1 text-[8px]">${tempo}</span></div>
+        </div>
+    `;
+}
+
+function atualizarRanking() {
+    const container = $('#ranking-container');
+    // Preenche inicial
+    for(let i=0; i<3; i++) container.append(gerarGanhadorFake());
+    
+    // Adiciona novos a cada X segundos
+    setInterval(() => {
+        const novo = $(gerarGanhadorFake()).hide().fadeIn();
+        container.prepend(novo);
+        if(container.children().length > 5) container.children().last().remove();
+    }, 4500);
+}
+
+// Notificações Flutuantes (Popup topo)
+const notificacoes = [
+    { titulo: "Nova Compra", msg: "Alguém comprou 20 tentativas!", cor: "text-green-400" },
+    { titulo: "Oportunidade", msg: "Prêmio acumulou para R$ 1.500,00", cor: "text-yellow-400" },
+    { titulo: "Segurança", msg: "Um usuário errou a senha 3x.", cor: "text-red-400" }
 ];
 
 function mostrarNotificacao() {
-    const nome = nomes[Math.floor(Math.random() * nomes.length)];
-    const sulfixo = Math.floor(Math.random() * 99);
-    const acao = acoes[Math.floor(Math.random() * acoes.length)];
+    const item = notificacoes[Math.floor(Math.random() * notificacoes.length)];
+    $('#notificacao-titulo').text(item.titulo).attr('class', `font-bold ${item.cor}`);
+    $('#notificacao-msg').text(item.msg);
     
-    $('#notificacao-titulo').text(acao.titulo).attr('class', `font-bold ${acao.cor}`);
-    $('#notificacao-msg').text(`${nome}_${sulfixo} ${acao.msg}`);
+    const notif = document.getElementById('notificacao-live');
+    notif.classList.add('active');
+    setTimeout(() => { notif.classList.remove('active'); }, 4000);
     
-    if (window.innerWidth > 350) {
-        const notif = document.getElementById('notificacao-live');
-        notif.classList.add('active');
-        play(sfx.pop);
-        setTimeout(() => { notif.classList.remove('active'); }, 4000);
-    }
-    let proximoTempo = Math.floor(Math.random() * 7000) + 5000;
-    setTimeout(mostrarNotificacao, proximoTempo);
+    setTimeout(mostrarNotificacao, Math.random() * 10000 + 5000);
 }
-setTimeout(mostrarNotificacao, 3000);
+setTimeout(mostrarNotificacao, 5000);

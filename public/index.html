@@ -93,15 +93,15 @@
         </span>
     </div>
 
-    <div id="notificacao-live" class="fixed top-6 z-[100] live-notification flex items-center gap-3 bg-slate-800/90 backdrop-blur-md border-l-4 border-green-500 text-white px-4 py-3 rounded shadow-2xl max-w-[90%] sm:max-w-xs">
-        <div class="bg-green-500/20 p-1.5 rounded-full">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+    <div id="notificacao-live" class="fixed top-6 z-[100] live-notification flex items-center gap-3 bg-slate-800/90 backdrop-blur-md border-l-4 border-yellow-500 text-white px-4 py-3 rounded shadow-2xl max-w-[90%] sm:max-w-xs">
+        <div class="bg-yellow-500/20 p-1.5 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
         </div>
         <div class="text-xs">
-            <p class="font-bold text-green-400" id="notificacao-titulo">Novo Saque!</p>
-            <p class="text-slate-300" id="notificacao-msg">Carlos_021 sacou R$ 150,00</p>
+            <p class="font-bold text-yellow-400" id="notificacao-titulo">Alerta!</p>
+            <p class="text-slate-300" id="notificacao-msg">...</p>
         </div>
     </div>
 
@@ -413,7 +413,7 @@
         }
 
         // ==========================================
-        // SISTEMA DE GATILHOS MENTAIS (FAKE LIVE)
+        // SISTEMA DE GATILHOS MENTAIS (CORRIGIDO)
         // ==========================================
         
         // 1. Contador de Online
@@ -427,15 +427,16 @@
             contadorEl.innerText = novo;
         }, 3000);
 
-        // 2. Notificações de Ganhadores/Compras
+        // 2. Notificações de COMPETIÇÃO (Investimento/Tentativa)
         const nomes = ["Pedro", "Ana", "Lucas", "Marcos", "Júlia", "Rafael", "Carla", "Bruno", "Felipe", "Mariana", "João", "Gustavo", "Larissa", "Thiago", "Camila"];
         const acoes = [
-            { titulo: "Nova Compra!", msg: "comprou o Combo Estratégia", cor: "text-blue-400" },
-            { titulo: "Dica Revelada!", msg: "acabou de comprar uma Pista", cor: "text-yellow-400" },
-            { titulo: "Tentativa!", msg: "errou por 1 número...", cor: "text-red-400" },
-            { titulo: "Novo Saque!", msg: "sacou R$ 50,00 via PIX", cor: "text-green-400" },
-            { titulo: "Novo Saque!", msg: "sacou R$ 120,00 via PIX", cor: "text-green-400" },
-            { titulo: "Hackeando...", msg: "comprou Pista Nível 2", cor: "text-purple-400" }
+            // Focados em GASTAR/INVESTIR (justifica o prêmio aumentar)
+            { titulo: "Nova Compra!", msg: "acabou de comprar 20 tentativas", cor: "text-green-400" },
+            { titulo: "Atenção!", msg: "comprou uma Pista Nível 1", cor: "text-yellow-400" },
+            { titulo: "Perigo!", msg: "quase acertou a senha...", cor: "text-red-400" }, // Tensão
+            { titulo: "Novo Hacker!", msg: "entrou no sistema agora", cor: "text-blue-400" },
+            { titulo: "Investimento!", msg: "está hackeando o Nível 2...", cor: "text-purple-400" },
+            { titulo: "Tentativa!", msg: "errou por 2 números...", cor: "text-slate-300" }
         ];
 
         function mostrarNotificacao() {
@@ -448,18 +449,20 @@
             $('#notificacao-titulo').text(acao.titulo).attr('class', `font-bold ${acao.cor}`);
             $('#notificacao-msg').text(`${nomeCompleto} ${acao.msg}`);
             
-            // Mostra
-            const notif = document.getElementById('notificacao-live');
-            notif.classList.add('active');
-            play(sfx.pop);
+            // Mostra (se não estiver em mobile muito pequeno atrapalhando)
+            if (window.innerWidth > 350) {
+                const notif = document.getElementById('notificacao-live');
+                notif.classList.add('active');
+                play(sfx.pop);
 
-            // Esconde depois de 4s
-            setTimeout(() => {
-                notif.classList.remove('active');
-            }, 4000);
+                // Esconde depois de 4s
+                setTimeout(() => {
+                    notif.classList.remove('active');
+                }, 4000);
+            }
 
-            // Agenda a próxima (entre 5s e 15s)
-            let proximoTempo = Math.floor(Math.random() * 10000) + 5000;
+            // Agenda a próxima (entre 5s e 12s) - Mais rápido para gerar urgência
+            let proximoTempo = Math.floor(Math.random() * 7000) + 5000;
             setTimeout(mostrarNotificacao, proximoTempo);
         }
 

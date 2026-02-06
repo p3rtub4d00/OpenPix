@@ -3,481 +3,267 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenPix | O Segredo do Cofre</title>
-    
+    <title>OpenPix | Destrava Cell</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
-    
     <style>
         body {
             background-image: url('fundo-cofre.jpg');
-            background-size: cover; 
-            background-position: center;
-            background-repeat: no-repeat; 
-            background-attachment: fixed;
+            background-size: cover; background-position: center;
+            background-repeat: no-repeat; background-attachment: fixed;
         }
-        
-        /* Efeito de Vidro (Glassmorphism) */
         .glass-panel {
-            background: rgba(11, 15, 25, 0.90);
-            backdrop-filter: blur(16px); 
-            -webkit-backdrop-filter: blur(16px);
+            background: rgba(11, 15, 25, 0.95);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
         }
-
         .input-display {
             background: rgba(0, 0, 0, 0.95);
-            border: 1px solid rgba(234, 179, 8, 0.3);
-            box-shadow: inset 0 0 20px rgba(0,0,0,1);
+            border: 1px solid rgba(234, 179, 8, 0.4);
+            box-shadow: inset 0 0 30px rgba(0,0,0,1);
         }
-
-        /* Efeito Neon no Prêmio */
-        .neon-text {
-            text-shadow: 0 0 10px rgba(74, 222, 128, 0.5), 
-                         0 0 20px rgba(74, 222, 128, 0.3),
-                         0 0 30px rgba(74, 222, 128, 0.1);
-        }
-
-        /* Terminal Hacker */
         .terminal-log {
-            font-family: 'Courier New', Courier, monospace; 
-            font-size: 0.8rem;
-            text-align: left; 
-            padding: 10px; 
-            color: #4ade80; /* Verde Matrix */
-            min-height: 100px; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: flex-end;
-            opacity: 0; 
-            transition: opacity 0.3s;
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid rgba(0, 255, 0, 0.2);
+            font-family: 'Courier New', Courier, monospace; font-size: 0.75rem;
+            text-align: left; padding: 12px; color: #4ade80;
+            background: rgba(0, 0, 0, 0.9); border: 1px solid rgba(0, 255, 0, 0.2);
+            min-height: 120px; display: flex; flex-direction: column; justify-content: flex-end;
         }
-        
-        .log-line { 
-            margin-bottom: 2px; 
-            overflow: hidden; 
-            white-space: nowrap; 
-            animation: typing 0.5s steps(40, end); 
-        }
-
-        /* Animações CSS */
+        .log-line { margin-bottom: 2px; overflow: hidden; white-space: nowrap; animation: typing 0.4s steps(40, end); }
         @keyframes typing { from { width: 0 } to { width: 100% } }
-        
-        .modal-backdrop { 
-            background-color: rgba(0, 0, 0, 0.85); 
-            backdrop-filter: blur(8px); 
-        }
-        
-        /* Cards de Planos */
-        .plan-card:hover { 
-            transform: translateY(-5px); 
-            border-color: #eab308; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-        }
-        .best-value { 
-            border: 2px solid #eab308; 
-            background: rgba(234, 179, 8, 0.1); 
-        }
+        .modal-backdrop { background-color: rgba(0, 0, 0, 0.9); backdrop-filter: blur(10px); }
+        .shake { animation: shake 0.5s; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+        @keyframes shimmer { 0% { left: -100%; } 100% { left: 200%; } }
     </style>
 </head>
 <body class="text-white flex flex-col items-center justify-center min-h-screen p-4 overflow-hidden">
 
-    <div class="fixed inset-0 bg-black/60 z-[-1]"></div>
+    <div class="fixed inset-0 bg-black/70 z-[-1]"></div>
 
     <audio id="sfx-type" src="type.mp3"></audio>
     <audio id="sfx-error" src="error.mp3"></audio>
     <audio id="sfx-win" src="win.mp3"></audio>
 
     <div class="absolute top-4 right-4 z-50">
-        <button onclick="abrirHistorico()" class="bg-white/10 hover:bg-white/20 border border-white/20 text-xs text-white px-4 py-2 rounded-full transition-all flex items-center gap-2 hover:scale-105 active:scale-95">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            MEUS PALPITES
+        <button onclick="abrirHistorico()" class="bg-white/5 hover:bg-white/10 border border-white/10 text-[10px] px-4 py-2 rounded-full transition-all flex items-center gap-2">
+            📂 MEUS PALPITES
         </button>
     </div>
 
-    <main class="glass-panel p-6 sm:p-10 rounded-3xl w-full max-w-md text-center relative overflow-hidden mx-auto border-t border-white/10">
-        
-        <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent"></div>
-
+    <main class="glass-panel p-8 rounded-[2.5rem] w-full max-w-md text-center relative border-t border-white/20">
         <header class="mb-8">
-            <h1 class="text-5xl font-black tracking-tighter mb-1">
-                <span class="text-yellow-500 drop-shadow-md">OPEN</span><span class="text-white drop-shadow-md">PIX</span>
+            <h1 class="text-5xl font-black tracking-tighter italic">
+                <span class="text-yellow-500">OPEN</span>PIX
             </h1>
-            <p class="text-slate-400 text-[0.65rem] font-bold tracking-[0.3em] uppercase">Sistema de Segurança Ativo</p>
+            <p class="text-slate-500 text-[10px] font-bold tracking-[0.4em] uppercase">Security Protocol Active</p>
         </header>
 
-        <div class="mb-10 relative">
-            <div class="absolute inset-0 bg-green-500/5 blur-3xl rounded-full z-0"></div>
-            <span class="relative z-10 text-[0.6rem] uppercase tracking-[0.2em] text-slate-400 font-bold border border-slate-700/50 px-3 py-1 rounded-full bg-black/40">Prêmio Acumulado</span>
-            <div class="relative z-10 text-6xl sm:text-7xl font-mono font-black text-green-400 mt-4 neon-text tracking-tighter">
+        <div class="mb-10">
+            <span class="text-[10px] uppercase tracking-widest text-slate-400 font-bold bg-black/50 px-4 py-1 rounded-full border border-slate-800">Prêmio Acumulado</span>
+            <div class="text-6xl font-mono font-black text-green-400 mt-4 tracking-tighter" style="text-shadow: 0 0 20px rgba(74, 222, 128, 0.4);">
                 R$ <span id="premio">500,30</span>
             </div>
         </div>
 
-        <div class="input-display p-4 rounded-xl mb-6 relative">
-            <input type="password" id="senha" maxlength="4" placeholder="----" 
-                   class="bg-transparent text-center text-5xl font-mono font-bold tracking-[1rem] outline-none w-full text-white placeholder-slate-800 focus:placeholder-transparent transition-all">
+        <div class="input-display p-5 rounded-2xl mb-6">
+            <input type="password" id="senha" maxlength="4" placeholder="----" class="bg-transparent text-center text-6xl font-mono font-bold tracking-[1.2rem] outline-none w-full text-white placeholder-slate-900 focus:placeholder-transparent transition-all">
         </div>
 
-        <div id="terminal" class="terminal-log bg-black/50 rounded-lg mb-6 border border-green-900/30 hidden">
-            </div>
+        <div id="terminal" class="terminal-log rounded-xl mb-6 hidden opacity-0 transition-opacity duration-300"></div>
 
-        <button id="btn-acao" onclick="verificarLogin()" 
-                class="w-full bg-gradient-to-b from-yellow-400 to-yellow-600 hover:from-yellow-300 hover:to-yellow-500 text-black font-black text-xl py-5 rounded-xl transition-all transform hover:scale-[1.01] active:scale-95 border-b-4 border-yellow-800 active:border-b-0 active:translate-y-1 relative overflow-hidden group shadow-lg shadow-yellow-500/20">
-            <div class="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[-20deg] group-hover:animate-[shimmer_1s_infinite]"></div>
+        <button id="btn-acao" onclick="verificarLogin()" class="w-full bg-gradient-to-b from-yellow-400 to-yellow-600 text-black font-black text-2xl py-5 rounded-2xl transition-all active:scale-95 border-b-4 border-yellow-800 relative overflow-hidden group">
+            <div class="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/50 to-transparent skew-x-[-20deg] group-hover:animate-[shimmer_1.5s_infinite]"></div>
             <span id="btn-texto">ABRIR AGORA</span>
         </button>
 
-        <footer class="mt-8 text-slate-600 text-[0.5rem] uppercase tracking-widest">
-            <p>Conexão Criptografada SSL • © 2026 OpenPix</p>
-        </footer>
+        <button onclick="abrirDicas()" class="mt-6 text-yellow-500/40 hover:text-yellow-500 text-[10px] font-bold tracking-widest transition-all">
+            ESTÁ DIFÍCIL? COMPRE UMA PISTA 🔍
+        </button>
     </main>
 
     <div id="modal-cadastro" class="fixed inset-0 modal-backdrop z-[60] hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 p-8 rounded-2xl w-full max-w-sm relative shadow-2xl">
-            <button onclick="fecharModal('modal-cadastro')" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
-            
-            <h3 class="text-xl font-bold text-yellow-500 mb-2">IDENTIFICAÇÃO</h3>
-            <p class="text-slate-400 text-xs mb-6">Identifique-se para validar sua tentativa e receber o Pix caso acerte.</p>
-            
-            <form id="form-cadastro" onsubmit="salvarCadastro(event)">
-                <div class="mb-4 text-left">
-                    <label class="text-xs text-slate-500 font-bold ml-1">NOME COMPLETO</label>
-                    <input type="text" id="input-nome" required class="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white outline-none focus:border-yellow-500 transition-colors">
-                </div>
-                <div class="mb-4 text-left">
-                    <label class="text-xs text-slate-500 font-bold ml-1">WHATSAPP</label>
-                    <input type="tel" id="input-tel" required class="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white outline-none focus:border-yellow-500 transition-colors" placeholder="(11) 99999-9999">
-                </div>
-                <div class="mb-6 text-left">
-                    <label class="text-xs text-slate-500 font-bold ml-1">CPF (Chave Pix)</label>
-                    <input type="text" id="input-cpf" required class="w-full bg-slate-800 border border-slate-600 rounded-lg p-3 text-white outline-none focus:border-yellow-500 transition-colors" placeholder="000.000.000-00">
-                </div>
-                <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-green-600/20">SALVAR E CONTINUAR</button>
+        <div class="bg-slate-900 border border-slate-700 p-8 rounded-3xl w-full max-w-sm shadow-2xl">
+            <h3 class="text-2xl font-black text-yellow-500 mb-2 italic">IDENTIFICAÇÃO</h3>
+            <p class="text-slate-400 text-xs mb-8">Cadastre-se para validar suas tentativas.</p>
+            <form onsubmit="salvarCadastro(event)" class="space-y-4">
+                <input type="text" id="input-nome" placeholder="Nome Completo" required class="w-full bg-black border border-slate-700 rounded-xl p-4 text-white outline-none focus:border-yellow-500">
+                <input type="tel" id="input-tel" placeholder="WhatsApp" required class="w-full bg-black border border-slate-700 rounded-xl p-4 text-white outline-none focus:border-yellow-500">
+                <input type="text" id="input-cpf" placeholder="CPF (Para Receber)" required class="w-full bg-black border border-slate-700 rounded-xl p-4 text-white outline-none focus:border-yellow-500">
+                <button class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl transition-all uppercase tracking-widest">Confirmar</button>
             </form>
         </div>
     </div>
 
     <div id="modal-planos" class="fixed inset-0 modal-backdrop z-[70] hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 p-6 rounded-3xl w-full max-w-sm relative shadow-2xl">
-            <button onclick="fecharModal('modal-planos')" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
-            
-            <div class="text-center mb-6">
-                <h3 class="text-2xl font-black text-white italic">ESCOLHA SEU PLANO</h3>
-                <p class="text-slate-400 text-xs">Quanto mais chances, maior a probabilidade.</p>
+        <div class="bg-slate-900 border border-slate-700 p-6 rounded-[2rem] w-full max-w-sm shadow-2xl">
+            <div class="text-center mb-8">
+                <h3 class="text-2xl font-black text-white italic">SALDO INSUFICIENTE</h3>
+                <p class="text-slate-500 text-[10px] uppercase tracking-widest">Escolha um pacote de tentativas</p>
             </div>
-
             <div class="space-y-3">
-                <div onclick="selecionarPlano(0.50, 1, 'Tentativa Única')" class="plan-card cursor-pointer bg-slate-800 border border-slate-600 p-4 rounded-xl flex justify-between items-center transition-all hover:bg-slate-700">
-                    <div>
-                        <div class="font-bold text-white">TENTATIVA ÚNICA</div>
-                        <div class="text-xs text-slate-400">Teste sua sorte</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-xl font-black text-yellow-500">R$ 0,50</div>
-                        <div class="text-[0.6rem] text-slate-500">1 chance</div>
-                    </div>
+                <div onclick="selecionarPlano(1.00, 1, '1 Tentativa')" class="bg-slate-800 p-4 rounded-2xl flex justify-between items-center border border-slate-700 cursor-pointer">
+                    <span class="font-bold">1 TENTATIVA</span>
+                    <span class="text-yellow-500 font-black">R$ 1,00</span>
                 </div>
-
-                <div onclick="selecionarPlano(2.00, 5, 'Combo Estratégia')" class="plan-card best-value cursor-pointer bg-slate-800/80 p-4 rounded-xl flex justify-between items-center transition-all relative overflow-hidden">
-                    <div class="absolute top-0 left-0 bg-yellow-500 text-black text-[0.6rem] font-bold px-2 py-0.5 rounded-br-lg">MAIS VENDIDO</div>
-                    <div>
-                        <div class="font-bold text-white mt-1">COMBO ESTRATÉGIA</div>
-                        <div class="text-xs text-green-400">Economize 20%</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-2xl font-black text-yellow-400">R$ 2,00</div>
-                        <div class="text-[0.6rem] text-slate-400">5 chances</div>
-                    </div>
+                <div onclick="selecionarPlano(5.00, 7, '7 Tentativas')" class="bg-slate-800 p-4 rounded-2xl flex justify-between items-center border-2 border-yellow-500 cursor-pointer relative">
+                    <div class="absolute -top-2 right-4 bg-yellow-500 text-black text-[8px] font-black px-2 py-0.5 rounded italic">MELHOR VALOR</div>
+                    <span class="font-bold">7 TENTATIVAS</span>
+                    <span class="text-yellow-500 font-black">R$ 5,00</span>
                 </div>
-
-                <div onclick="selecionarPlano(5.00, 15, 'Pacote Mestre')" class="plan-card cursor-pointer bg-slate-800 border border-slate-600 p-4 rounded-xl flex justify-between items-center transition-all hover:bg-slate-700">
-                    <div>
-                        <div class="font-bold text-white">PACOTE MESTRE</div>
-                        <div class="text-xs text-green-400">Muitas chances</div>
-                    </div>
-                    <div class="text-right">
-                        <div class="text-xl font-black text-yellow-500">R$ 5,00</div>
-                        <div class="text-[0.6rem] text-slate-500">15 chances</div>
-                    </div>
+                <div onclick="selecionarPlano(10.00, 20, '20 Tentativas')" class="bg-slate-800 p-4 rounded-2xl flex justify-between items-center border border-slate-700 cursor-pointer">
+                    <span class="font-bold">20 TENTATIVAS</span>
+                    <span class="text-yellow-500 font-black">R$ 10,00</span>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <p class="text-center text-[0.6rem] text-slate-500 mt-6">Pagamento via PIX Instantâneo</p>
+    <div id="modal-dicas" class="fixed inset-0 modal-backdrop z-[80] hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-yellow-500/50 p-6 rounded-[2rem] w-full max-w-sm shadow-2xl">
+            <button onclick="fecharModal('modal-dicas')" class="absolute top-4 right-4 text-slate-500">✕</button>
+            <div class="text-center mb-8">
+                <h3 class="text-2xl font-black text-yellow-500 italic uppercase">Comprar Pista</h3>
+                <p class="text-slate-400 text-[10px]">Aumente drasticamente suas chances</p>
+            </div>
+            <div class="space-y-3">
+                <div onclick="comprarDica(1, 10.00, 'Pista 1')" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700 cursor-pointer">
+                    <span class="text-sm font-bold">REVELAR 1º NÚMERO</span>
+                    <span class="text-green-400 font-black">R$ 10,00</span>
+                </div>
+                <div onclick="comprarDica(2, 25.00, 'Pista 2')" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700 cursor-pointer">
+                    <span class="text-sm font-bold">REVELAR 2 NÚMEROS</span>
+                    <span class="text-green-400 font-black">R$ 25,00</span>
+                </div>
+                <div onclick="comprarDica(3, 50.00, 'Pista 3')" class="bg-slate-800 p-4 rounded-xl flex justify-between items-center border border-slate-700 cursor-pointer">
+                    <span class="text-sm font-bold">REVELAR 3 NÚMEROS</span>
+                    <span class="text-green-400 font-black">R$ 50,00</span>
+                </div>
+                <div onclick="comprarDica(4, 350.00, 'Pista 4')" class="bg-yellow-500/10 p-4 rounded-xl flex justify-between items-center border border-yellow-500 cursor-pointer animate-pulse">
+                    <span class="text-sm font-black text-yellow-500 italic">SENHA COMPLETA (80%)</span>
+                    <span class="text-yellow-500 font-black">R$ 350,00</span>
+                </div>
+            </div>
         </div>
     </div>
 
     <div id="modal-historico" class="fixed inset-0 modal-backdrop z-[60] hidden flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-700 p-6 rounded-2xl w-full max-w-sm relative shadow-2xl h-[400px] flex flex-col">
-            <button onclick="fecharModal('modal-historico')" class="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
-            <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                <span class="text-yellow-500">📂</span> MEUS PALPITES
-            </h3>
-            
-            <div id="lista-historico" class="flex-1 overflow-y-auto space-y-2 pr-2">
-                </div>
+        <div class="bg-slate-900 border border-slate-700 p-6 rounded-3xl w-full max-w-sm h-[400px] flex flex-col shadow-2xl">
+            <button onclick="fecharModal('modal-historico')" class="text-right text-slate-500">FECHAR</button>
+            <h3 class="text-xl font-black mb-4">LOGS DE ACESSO</h3>
+            <div id="lista-historico" class="flex-1 overflow-y-auto space-y-2 pr-2"></div>
         </div>
     </div>
 
     <script>
-        // 1. Configuração Inicial e Atualização do Prêmio na Tela
-        document.getElementById('premio').innerText = (500.30).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-        
-        // --- SONOPLASTIA ---
-        const audioType = document.getElementById('sfx-type');
-        const audioError = document.getElementById('sfx-error');
-        const audioWin = document.getElementById('sfx-win');
-        
-        function playSound(sound) { 
-            if(sound) { 
-                sound.currentTime = 0; 
-                sound.play().catch(e => console.log("Audio play blocked (user needs to interact first)")); 
-            }
-        }
+        // --- LOGICA DE SONS ---
+        const sfx = { type: document.getElementById('sfx-type'), error: document.getElementById('sfx-error'), win: document.getElementById('sfx-win') };
+        function play(s) { if(s) { s.currentTime = 0; s.play().catch(()=>{}); } }
 
-        // --- MÁSCARAS DE INPUT (JQuery) ---
-        $(document).ready(function(){ 
-            $('#input-tel').mask('(00) 00000-0000'); 
-            $('#input-cpf').mask('000.000.000-00'); 
-        });
-        
-        // --- GERENCIAMENTO DE ESTADO (LOCALSTORAGE) ---
+        // --- MASCARAS ---
+        $(document).ready(() => { $('#input-tel').mask('(00) 00000-0000'); $('#input-cpf').mask('000.000.000-00'); });
+
+        // --- DADOS ---
         let usuario = JSON.parse(localStorage.getItem('openpix_user')) || null;
         let historico = JSON.parse(localStorage.getItem('openpix_history')) || [];
 
-        // 2. Função Principal do Botão "ABRIR AGORA"
+        function fecharModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function abrirDicas() { document.getElementById('modal-dicas').classList.remove('hidden'); }
+
         function verificarLogin() {
-            const senhaInput = document.getElementById('senha');
-            
-            // Valida se digitou a senha
-            if (senhaInput.value.length !== 4) {
-                senhaInput.parentElement.style.borderColor = "red";
-                // Efeito visual de erro
-                setTimeout(() => senhaInput.parentElement.style.borderColor = "rgba(234, 179, 8, 0.3)", 500);
-                return;
-            }
-
-            // Se não tiver cadastro, abre modal de cadastro
-            if (!usuario) { 
-                document.getElementById('modal-cadastro').classList.remove('hidden'); 
-            } 
-            // Se já tem cadastro, vai direto para os Planos de Venda
-            else { 
-                abrirPlanos(); 
-            }
+            if (document.getElementById('senha').value.length !== 4) return;
+            if (!usuario) document.getElementById('modal-cadastro').classList.remove('hidden');
+            else document.getElementById('modal-planos').classList.remove('hidden');
         }
 
-        // --- FUNÇÕES DE MODAL ---
-        function abrirPlanos() { 
-            document.getElementById('modal-planos').classList.remove('hidden'); 
-        }
-        
-        function fecharModal(id) { 
-            document.getElementById(id).classList.add('hidden'); 
-        }
-
-        // 3. Sistema de Vendas (Integração com Server)
-        function selecionarPlano(valor, chances, nomePlano) {
-            fecharModal('modal-planos');
-            
-            const btnAcao = document.getElementById('btn-acao');
-            const btnTexto = document.getElementById('btn-texto');
-            
-            // Trava o botão para simular processamento
-            btnAcao.disabled = true;
-            btnTexto.innerText = "AGUARDANDO PIX...";
-
-            // Simula delay de pagamento e validação bancária
-            setTimeout(() => {
-                // AVISA O SERVIDOR QUE A VENDA ACONTECEU (Para o Painel Admin)
-                fetch('/registrar-venda', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ valor: valor, plano: nomePlano })
-                }).catch(e => console.log("Erro ao registrar venda no servidor"));
-
-                alert(`Pagamento de R$ ${valor.toFixed(2)} recebido! Iniciando tentativa...`);
-                
-                // Inicia o processo de Hacking
-                iniciarHack(); 
-            }, 1500);
-        }
-
-        // 4. Voz da Inteligência Artificial
-        function falarBoasVindas(nomeCompleto) {
-            if ('speechSynthesis' in window) {
-                const primeiroNome = nomeCompleto.split(' ')[0];
-                const msg = new SpeechSynthesisUtterance();
-                msg.text = `Seja bem vindo, ${primeiroNome}. Selecione seu plano de acesso.`;
-                msg.lang = 'pt-BR'; 
-                msg.rate = 1.1; 
-                msg.pitch = 0.9;
-                window.speechSynthesis.speak(msg);
-            }
-        }
-
-        // 5. Salvar Cadastro (Lead)
         function salvarCadastro(e) {
             e.preventDefault();
-            const nome = document.getElementById('input-nome').value;
-            const tel = document.getElementById('input-tel').value;
-            const cpf = document.getElementById('input-cpf').value;
-
-            // Salva localmente
-            usuario = { nome, tel, cpf };
+            usuario = { nome: $('#input-nome').val(), tel: $('#input-tel').val(), cpf: $('#input-cpf').val() };
             localStorage.setItem('openpix_user', JSON.stringify(usuario));
-            
-            // Envia para o servidor (Para o Painel Admin)
-            fetch('/salvar-lead', { 
-                method: 'POST', 
-                headers: {'Content-Type': 'application/json'}, 
-                body: JSON.stringify(usuario) 
-            }).catch(err => console.log("Erro de conexão ao salvar lead"));
-
+            fetch('/salvar-lead', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(usuario) });
             fecharModal('modal-cadastro');
-            falarBoasVindas(nome);
-            abrirPlanos(); // Abre os planos logo após cadastrar
+            if ('speechSynthesis' in window) {
+                const speech = new SpeechSynthesisUtterance(`Seja bem vindo ${usuario.nome.split(' ')[0]}. Identidade validada.`);
+                speech.lang = 'pt-BR'; window.speechSynthesis.speak(speech);
+            }
+            document.getElementById('modal-planos').classList.remove('hidden');
         }
 
-        // --- LÓGICA DO TERMINAL HACKER ---
-        const terminal = document.getElementById('terminal');
-        const btnAcao = document.getElementById('btn-acao');
-        const btnTexto = document.getElementById('btn-texto');
-        const senhaInput = document.getElementById('senha');
-        
-        // Função utilitária para "pausas" dramáticas
-        const delay = ms => new Promise(res => setTimeout(res, ms));
+        function selecionarPlano(valor, chances, plano) {
+            fecharModal('modal-planos');
+            $('#btn-texto').text('PROCESSANDO...');
+            setTimeout(() => {
+                fetch('/registrar-venda', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ valor, plano }) });
+                iniciarHack();
+            }, 1000);
+        }
 
-        async function adicionarLog(msg, cor = "#4ade80") {
-            // Toca som de teclado aleatoriamente
-            if(Math.random() > 0.5) playSound(audioType);
-            
-            const linha = document.createElement('div');
-            linha.className = 'log-line'; 
-            linha.style.color = cor; 
-            linha.innerText = "> " + msg;
-            
-            terminal.appendChild(linha); 
-            terminal.scrollTop = terminal.scrollHeight;
+        async function comprarDica(nivel, valor, plano) {
+            fecharModal('modal-dicas');
+            if(confirm(`Confirmar pagamento de R$ ${valor.toFixed(2)}?`)) {
+                const res = await fetch('/comprar-dica', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ nivel, valor, plano }) });
+                const data = await res.json();
+                $('#terminal').removeClass('hidden').css('opacity', '1').empty();
+                log(`INTRUSÃO NÍVEL ${nivel} DETECTADA...`, "#eab308");
+                log(`PISTA ENCONTRADA: [ ${data.dica} ]`, "#fff");
+            }
+        }
+
+        async function log(m, c = "#4ade80") {
+            play(sfx.type);
+            const line = $(`<div class="log-line" style="color:${c}">> ${m}</div>`);
+            $('#terminal').append(line);
+            $('#terminal').scrollTop($('#terminal')[0].scrollHeight);
         }
 
         async function iniciarHack() {
-            const senhaTentativa = senhaInput.value;
+            const senhaTentativa = $('#senha').val();
+            $('#btn-acao').prop('disabled', true);
+            $('#terminal').removeClass('hidden').css('opacity', '1').empty();
             
-            // Prepara UI
-            btnAcao.disabled = true;
-            btnTexto.innerText = "PROCESSANDO...";
-            terminal.classList.remove('hidden'); 
-            terminal.style.opacity = "1"; 
-            terminal.innerHTML = "";
-            senhaInput.disabled = true;
+            await log(`Iniciando protocolo para CPF: ${usuario.cpf}...`);
+            await new Promise(r => setTimeout(r, 800));
+            await log("Conectando ao servidor DestravaCell...");
+            await new Promise(r => setTimeout(r, 1200));
+            await log(`Injetando combinação: ${senhaTentativa}`);
+            await new Promise(r => setTimeout(r, 1000));
 
-            // Sequência de Hacking (O Teatro)
-            await adicionarLog(`Usuário: ${usuario.cpf}`); 
-            await delay(500);
-            await adicionarLog("Pagamento Confirmado (Lote #9921)..."); 
-            await delay(800);
-            await adicionarLog("Acessando Banco de Dados Central..."); 
-            await delay(1200);
-            await adicionarLog("Validando Criptografia SHA-256..."); 
-            await delay(800);
-            await adicionarLog("Testando senha: " + senhaTentativa + "..."); 
-            await delay(1000);
+            const res = await fetch('/tentar', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ senha: senhaTentativa }) });
+            const data = await res.json();
 
-            try {
-                // Pergunta ao servidor se a senha está certa
-                const res = await fetch('/tentar', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ senha: senhaTentativa })
-                });
-                const data = await res.json();
-                
-                // Salva no histórico local
-                historico.push({ 
-                    senha: senhaTentativa, 
-                    ganhou: data.ganhou, 
-                    data: new Date().toLocaleString('pt-BR') 
-                });
-                localStorage.setItem('openpix_history', JSON.stringify(historico));
+            historico.push({ senha: senhaTentativa, ganhou: data.ganhou, data: new Date().toLocaleString('pt-BR') });
+            localStorage.setItem('openpix_history', JSON.stringify(historico));
 
-                if (data.ganhou) {
-                    // VITÓRIA
-                    playSound(audioWin);
-                    await adicionarLog("ACESSO CONCEDIDO!", "#fbbf24"); 
-                    await delay(1000);
-                    alert(`💰 PARABÉNS! VOCÊ GANHOU R$ ${data.premio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
-                    location.reload();
-                } else {
-                    // DERROTA
-                    playSound(audioError);
-                    await adicionarLog("ERRO: SENHA INCORRETA.", "#ef4444");
-                    
-                    // Treme a tela
-                    document.body.classList.add('shake'); 
-                    await delay(1500);
-                    document.body.classList.remove('shake');
-                    
-                    // Reseta interface
-                    terminal.style.opacity = "0"; 
-                    setTimeout(() => terminal.classList.add('hidden'), 300);
-                    
-                    senhaInput.value = ""; 
-                    senhaInput.disabled = false; 
-                    senhaInput.focus();
-                    btnAcao.disabled = false; 
-                    btnTexto.innerText = "TENTAR NOVAMENTE";
-                    
-                    // Atualiza o valor do prêmio acumulado
-                    document.getElementById('premio').innerText = data.novoPremio.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                }
-            } catch (error) {
-                console.error(error); 
-                await adicionarLog("ERRO DE REDE - SERVIDOR OFFLINE", "red"); 
-                btnAcao.disabled = false;
-            }
-        }
-
-        // 6. Função para abrir o Histórico
-        function abrirHistorico() {
-            const lista = document.getElementById('lista-historico'); 
-            lista.innerHTML = "";
-            
-            if (historico.length === 0) {
-                lista.innerHTML = '<div class="text-center text-slate-500 text-sm mt-10">Nenhum palpite ainda.</div>';
+            if (data.ganhou) {
+                play(sfx.win);
+                await log("ACESSO CONCEDIDO! COFRE ABERTO.", "#fbbf24");
+                setTimeout(() => { alert(`💰 VOCÊ GANHOU R$ ${data.premio.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`); location.reload(); }, 1000);
             } else {
-                // Mostra do mais recente para o mais antigo
-                historico.slice().reverse().forEach(item => { 
-                    lista.innerHTML += `
-                        <div class="bg-slate-800 p-2 mb-2 rounded border border-slate-700 flex justify-between items-center">
-                            <span class="text-white font-mono text-lg tracking-widest">${item.senha}</span>
-                            <span class="${item.ganhou ? 'text-green-400' : 'text-red-400'} text-xs font-bold px-2 py-1 rounded bg-black/20">
-                                ${item.ganhou ? 'ABERTO' : 'FALHA'}
-                            </span>
-                        </div>`; 
-                }); 
+                play(sfx.error);
+                await log("ERRO: ACESSO NEGADO.", "#ef4444");
+                $('body').addClass('shake');
+                setTimeout(() => {
+                    $('body').removeClass('shake');
+                    $('#terminal').css('opacity', '0').addClass('hidden');
+                    $('#senha').val('').prop('disabled', false).focus();
+                    $('#btn-acao').prop('disabled', false);
+                    $('#btn-texto').text('TENTAR NOVAMENTE');
+                    $('#premio').text(data.novoPremio.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+                }, 1500);
             }
-            document.getElementById('modal-historico').classList.remove('hidden');
         }
 
-        // Injeta Animações CSS dinamicamente (Shimmer e Shake)
-        const styleSheet = document.createElement("style");
-        styleSheet.innerText = `
-            @keyframes shimmer { 0% { left: -100%; } 100% { left: 200%; } } 
-            .shake { animation: shake 0.5s; } 
-            @keyframes shake { 
-                0%, 100% { transform: translateX(0); } 
-                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); } 
-                20%, 40%, 60%, 80% { transform: translateX(5px); } 
-            }
-        `;
-        document.head.appendChild(styleSheet);
+        function abrirHistorico() {
+            const lista = $('#lista-historico').empty();
+            if (!historico.length) lista.html('<p class="text-center text-slate-600 mt-10 text-xs">Sem registros.</p>');
+            else historico.slice().reverse().forEach(h => {
+                lista.append(`<div class="bg-black/50 p-3 rounded-xl border border-slate-800 flex justify-between">
+                    <span class="font-mono text-lg">${h.senha}</span>
+                    <span class="text-[10px] font-bold ${h.ganhou?'text-green-500':'text-red-500'}">${h.ganhou?'SUCESSO':'FALHA'}</span>
+                </div>`);
+            });
+            $('#modal-historico').removeClass('hidden');
+        }
     </script>
 </body>
 </html>

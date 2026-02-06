@@ -9,23 +9,19 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 // ===================================================
-// ⚙️ CONFIGURAÇÕES GERAIS
+// ⚙️ CONFIGURAÇÕES
 // ===================================================
 
-// DADOS DO TELEGRAM (Preencha aqui)
 const TELEGRAM_BOT_TOKEN = "SEU_TOKEN_AQUI"; 
 const TELEGRAM_CHAT_ID = "SEU_CHAT_ID_AQUI"; 
-
-// SENHA DO ADMIN
 const SENHA_ADMIN = "admin123"; 
 
-// ARQUIVOS DE DADOS
 const ARQUIVO_LEADS = 'leads.json';
 const ARQUIVO_FINANCEIRO = 'financeiro.json';
 const ARQUIVO_SOLICITACOES = 'solicitacoes.json';
 const ARQUIVO_CONFIG = 'config.json';
 
-// Inicializa Configuração se não existir
+// Inicializa o cofre se não existir
 let configCofre = { premioAtual: 500.30, senhaCorreta: "1234" };
 if (fs.existsSync(ARQUIVO_CONFIG)) {
     configCofre = JSON.parse(fs.readFileSync(ARQUIVO_CONFIG));
@@ -85,7 +81,7 @@ function notificarTelegram(mensagem) {
 }
 
 // ===================================================
-// 🚀 ROTAS DO CLIENTE (JOGO)
+// 🚀 ROTAS DO JOGO
 // ===================================================
 
 // Salvar Lead (Cadastro)
@@ -99,7 +95,7 @@ app.post('/salvar-lead', (req, res) => {
     res.json({ status: "ok" });
 });
 
-// Registrar Venda (Tentativas)
+// Registrar Venda
 app.post('/registrar-venda', (req, res) => {
     const vendas = lerArquivo(ARQUIVO_FINANCEIRO);
     vendas.push({
@@ -113,10 +109,9 @@ app.post('/registrar-venda', (req, res) => {
     res.json({ status: "ok" });
 });
 
-// Registrar Compra de Dica
+// Comprar Dica
 app.post('/comprar-dica', (req, res) => {
     const { nivel, valor, plano } = req.body;
-    
     const vendas = lerArquivo(ARQUIVO_FINANCEIRO);
     vendas.push({
         plano: plano,
@@ -127,10 +122,8 @@ app.post('/comprar-dica', (req, res) => {
     
     notificarTelegram(`🕵️ *DICA VENDIDA (Nível ${nivel})*\nValor: R$ ${parseFloat(valor).toFixed(2)}`);
 
-    // Lógica da Pista
     const senhaReal = configCofre.senhaCorreta;
     let revelacao = "";
-
     if (nivel == 1) revelacao = senhaReal[0] + " _ _ _";
     if (nivel == 2) revelacao = senhaReal[0] + " " + senhaReal[1] + " _ _";
     if (nivel == 3) revelacao = senhaReal[0] + " " + senhaReal[1] + " " + senhaReal[2] + " _";
@@ -138,12 +131,12 @@ app.post('/comprar-dica', (req, res) => {
     res.json({ sucesso: true, dica: revelacao });
 });
 
-// Tentar abrir o cofre
+// Tentar Senha
 app.post('/tentar', (req, res) => {
     const { senha } = req.body;
     
     if (senha === configCofre.senhaCorreta) {
-        // GANHOU!
+        // Vitória
         const tokenVitoria = "WIN-" + crypto.randomBytes(3).toString('hex').toUpperCase();
         
         notificarTelegram(`🚨🚨 *O COFRE FOI ABERTO!* 🚨🚨\nSenha: ${senha}\nToken: ${tokenVitoria}\nAguardando solicitação de saque.`);
@@ -154,10 +147,9 @@ app.post('/tentar', (req, res) => {
             token: tokenVitoria
         });
     } else {
-        // ERROU: Aumenta o prêmio
+        // Derrota (Aumenta prêmio)
         configCofre.premioAtual += 0.50; 
         salvarArquivo(ARQUIVO_CONFIG, configCofre);
-        
         res.json({
             ganhou: false,
             novoPremio: configCofre.premioAtual
@@ -165,7 +157,7 @@ app.post('/tentar', (req, res) => {
     }
 });
 
-// Solicitar Saque (Novo Fluxo)
+// Solicitar Saque
 app.post('/solicitar-saque', (req, res) => {
     const { token, pix, nome, cpf, valor } = req.body;
     const solicitacoes = lerArquivo(ARQUIVO_SOLICITACOES);
@@ -191,7 +183,7 @@ app.post('/solicitar-saque', (req, res) => {
 // 🔐 ÁREA ADMINISTRATIVA
 // ===================================================
 
-// Rota de Login Admin
+// Rota Login Admin
 app.get('/admin', (req, res) => {
     res.send(`
     <!DOCTYPE html>
@@ -213,7 +205,7 @@ app.get('/admin', (req, res) => {
     `);
 });
 
-// Rota para Marcar como Pago
+// Rota Pagar Solicitacao
 app.post('/admin-pagar', (req, res) => {
     const { id } = req.body;
     const solicitacoes = lerArquivo(ARQUIVO_SOLICITACOES);
@@ -223,7 +215,7 @@ app.post('/admin-pagar', (req, res) => {
         solicitacoes[index].status = "PAGO";
         salvarArquivo(ARQUIVO_SOLICITACOES, solicitacoes);
         
-        // Zera o cofre após pagar
+        // Zera o cofre
         configCofre.premioAtual = 100.00; 
         salvarArquivo(ARQUIVO_CONFIG, configCofre);
         
@@ -233,7 +225,7 @@ app.post('/admin-pagar', (req, res) => {
     }
 });
 
-// Rota para Mudar Senha do Cofre
+// Rota Mudar Senha
 app.post('/admin-mudar-senha', (req, res) => {
     const { senha_admin, nova_senha_cofre } = req.body;
     
@@ -243,14 +235,19 @@ app.post('/admin-mudar-senha', (req, res) => {
         
         notificarTelegram(`🔐 *SENHA DO COFRE ALTERADA*\nNova senha: ${nova_senha_cofre}`);
         
-        // Redireciona de volta pro dashboard simulando o POST original
-        res.send(`<form action="/admin-dashboard" method="POST" id="formRedirect"><input type="hidden" name="senha" value="${SENHA_ADMIN}"></form><script>document.getElementById("formRedirect").submit();</script>`);
+        // Redireciona via JS para manter o POST
+        res.send(`
+            <form action="/admin-dashboard" method="POST" id="formRedirect">
+                <input type="hidden" name="senha" value="${SENHA_ADMIN}">
+            </form>
+            <script>document.getElementById("formRedirect").submit();</script>
+        `);
     } else {
         res.send("Erro: Senha admin incorreta.");
     }
 });
 
-// DASHBOARD COMPLETO (EXPANDIDO)
+// Rota Dashboard
 app.post('/admin-dashboard', (req, res) => {
     const { senha } = req.body;
     
@@ -258,13 +255,13 @@ app.post('/admin-dashboard', (req, res) => {
         return res.send("<h1>Acesso Negado</h1><a href='/admin'>Voltar</a>");
     }
     
-    // Carrega dados atualizados
+    // Carrega dados
     const leads = lerArquivo(ARQUIVO_LEADS);
     const vendas = lerArquivo(ARQUIVO_FINANCEIRO);
     const solicitacoes = lerArquivo(ARQUIVO_SOLICITACOES);
     const totalFaturado = vendas.reduce((acc, v) => acc + (parseFloat(v.valor) || 0), 0);
 
-    // HTML do Dashboard Expandido para facilitar leitura
+    // HTML DO DASHBOARD (TOTALMENTE EXPANDIDO)
     res.send(`
     <!DOCTYPE html>
     <html lang="pt-br">
@@ -274,13 +271,20 @@ app.post('/admin-dashboard', (req, res) => {
         <title>Painel Admin - OpenPix</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+        <style>
+            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+            .custom-scrollbar::-webkit-scrollbar-track { background: #0f172a; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+        </style>
     </head>
     <body class="bg-slate-950 text-white min-h-screen p-6 font-sans">
         <div class="max-w-6xl mx-auto">
             
             <header class="flex justify-between items-center mb-10 border-b border-slate-800 pb-6">
                 <h1 class="text-3xl font-black text-yellow-500">
-                    OPEN<span class="text-white">PIX</span> <span class="text-sm font-normal text-slate-500 ml-2">ADMIN V3.0</span>
+                    OPEN<span class="text-white">PIX</span> 
+                    <span class="text-sm font-normal text-slate-500 ml-2">ADMIN V3.0</span>
                 </h1>
                 <div class="text-right">
                     <p class="text-xs text-slate-500 uppercase tracking-widest">Prêmio Atual no Cofre</p>
@@ -289,9 +293,12 @@ app.post('/admin-dashboard', (req, res) => {
             </header>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                
                 <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
                     <div class="flex items-center gap-3 mb-2">
-                        <div class="bg-green-500/20 p-2 rounded-lg"><i class="fas fa-wallet text-green-500"></i></div>
+                        <div class="bg-green-500/20 p-2 rounded-lg">
+                            <i class="fas fa-wallet text-green-500"></i>
+                        </div>
                         <p class="text-slate-500 text-xs font-bold uppercase">Faturamento Total</p>
                     </div>
                     <p class="text-4xl font-black text-green-500">R$ ${totalFaturado.toFixed(2)}</p>
@@ -299,7 +306,9 @@ app.post('/admin-dashboard', (req, res) => {
 
                 <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
                     <div class="flex items-center gap-3 mb-2">
-                        <div class="bg-blue-500/20 p-2 rounded-lg"><i class="fas fa-users text-blue-500"></i></div>
+                        <div class="bg-blue-500/20 p-2 rounded-lg">
+                            <i class="fas fa-users text-blue-500"></i>
+                        </div>
                         <p class="text-slate-500 text-xs font-bold uppercase">Leads Cadastrados</p>
                     </div>
                     <p class="text-4xl font-black text-blue-500">${leads.length}</p>
@@ -307,7 +316,9 @@ app.post('/admin-dashboard', (req, res) => {
 
                 <div class="bg-slate-900 p-6 rounded-2xl border border-yellow-500/30 shadow-xl">
                     <div class="flex items-center gap-3 mb-2">
-                        <div class="bg-yellow-500/20 p-2 rounded-lg"><i class="fas fa-key text-yellow-500"></i></div>
+                        <div class="bg-yellow-500/20 p-2 rounded-lg">
+                            <i class="fas fa-key text-yellow-500"></i>
+                        </div>
                         <p class="text-slate-500 text-xs font-bold uppercase">Senha do Cofre</p>
                     </div>
                     <form action="/admin-mudar-senha" method="POST" class="flex gap-2 mt-4">

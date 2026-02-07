@@ -167,6 +167,20 @@
 
     <section class="w-[95%] max-w-md z-10 my-6 bg-black/60 border border-white/10 rounded-2xl p-4 backdrop-blur-sm">
         <h3 class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest mb-4 text-center flex items-center justify-center gap-2 border-b border-white/5 pb-2">
+            <i class="fas fa-money-check-alt"></i> Acompanhar Saque
+        </h3>
+        <div class="space-y-3 text-xs text-slate-300">
+            <input type="text" id="saque-token" placeholder="Token de Saque" class="w-full bg-black/50 border border-slate-700 rounded-xl p-3 text-white text-sm outline-none focus:border-yellow-500 transition text-center font-mono">
+            <input type="text" id="saque-cpf" placeholder="CPF usado no cadastro" class="w-full bg-black/50 border border-slate-700 rounded-xl p-3 text-white text-sm outline-none focus:border-yellow-500 transition text-center font-mono">
+            <button onclick="acompanharSaque()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-xl uppercase tracking-widest transition-all text-xs">
+                Consultar Status
+            </button>
+            <div id="status-saque" class="text-center text-[10px] text-slate-400"></div>
+        </div>
+    </section>
+
+    <section class="w-[95%] max-w-md z-10 my-6 bg-black/60 border border-white/10 rounded-2xl p-4 backdrop-blur-sm">
+        <h3 class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest mb-4 text-center flex items-center justify-center gap-2 border-b border-white/5 pb-2">
             <i class="fas fa-question-circle"></i> Dúvidas Frequentes
         </h3>
         <div class="space-y-3 text-xs text-slate-300">

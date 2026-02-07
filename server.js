@@ -173,6 +173,11 @@ function obterTopVencedoresDia(quantidade = 5) {
         }));
 }
 
+function normalizarCpf(valor) {
+    if (!valor) return '';
+    return String(valor).replace(/\D/g, '');
+}
+
 // ===================================================
 // 🚀 ROTAS DO JOGO
 // ===================================================
@@ -300,7 +305,28 @@ app.post('/acompanhar-saque', (req, res) => {
         return res.status(400).json({ sucesso: false, mensagem: 'Informe token e CPF.' });
     }
     const solicitacoes = lerArquivo(ARQUIVO_SOLICITACOES);
-    const solicitacao = solicitacoes.find(s => s.token === token && s.cpf === cpf);
+    const cpfNormalizado = normalizarCpf(cpf);
+    const solicitacao = solicitacoes.find(s => s.token === token && normalizarCpf(s.cpf) === cpfNormalizado);
+    if (!solicitacao) {
+        return res.status(404).json({ sucesso: false, mensagem: 'Solicitação não encontrada.' });
+    }
+    res.json({
+        sucesso: true,
+        status: solicitacao.status,
+        valor: solicitacao.valor,
+        data: solicitacao.data
+    });
+});
+
+// Consultar status do saque via GET (compatibilidade)
+app.get('/acompanhar-saque', (req, res) => {
+    const { token, cpf } = req.query;
+    if (!token || !cpf) {
+        return res.status(400).json({ sucesso: false, mensagem: 'Informe token e CPF.' });
+    }
+    const solicitacoes = lerArquivo(ARQUIVO_SOLICITACOES);
+    const cpfNormalizado = normalizarCpf(cpf);
+    const solicitacao = solicitacoes.find(s => s.token === token && normalizarCpf(s.cpf) === cpfNormalizado);
     if (!solicitacao) {
         return res.status(404).json({ sucesso: false, mensagem: 'Solicitação não encontrada.' });
     }

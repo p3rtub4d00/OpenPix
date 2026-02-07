@@ -293,6 +293,25 @@ app.post('/solicitar-saque', (req, res) => {
     res.json({ sucesso: true });
 });
 
+// Consultar status do saque
+app.post('/acompanhar-saque', (req, res) => {
+    const { token, cpf } = req.body;
+    if (!token || !cpf) {
+        return res.status(400).json({ sucesso: false, mensagem: 'Informe token e CPF.' });
+    }
+    const solicitacoes = lerArquivo(ARQUIVO_SOLICITACOES);
+    const solicitacao = solicitacoes.find(s => s.token === token && s.cpf === cpf);
+    if (!solicitacao) {
+        return res.status(404).json({ sucesso: false, mensagem: 'Solicitação não encontrada.' });
+    }
+    res.json({
+        sucesso: true,
+        status: solicitacao.status,
+        valor: solicitacao.valor,
+        data: solicitacao.data
+    });
+});
+
 // Registrar vencedor (para aparecer nos últimos ganhadores)
 app.post('/registrar-ganhador', (req, res) => {
     const { nome, valor, token } = req.body;

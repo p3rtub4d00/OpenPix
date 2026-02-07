@@ -583,6 +583,34 @@ async function solicitarSaque() {
     }).then(() => location.reload());
 }
 
+async function acompanharSaque() {
+    const token = $('#saque-token').val();
+    const cpf = $('#saque-cpf').val();
+    const statusEl = document.getElementById('status-saque');
+    if (!token || !cpf) {
+        if (statusEl) statusEl.textContent = 'Informe token e CPF para consultar.';
+        return;
+    }
+
+    try {
+        const resposta = await fetch('/acompanhar-saque', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ token, cpf })
+        });
+        const dados = await resposta.json();
+        if (!resposta.ok || !dados.sucesso) {
+            if (statusEl) statusEl.textContent = dados.mensagem || 'Solicitação não encontrada.';
+            return;
+        }
+        if (statusEl) {
+            statusEl.textContent = `Status: ${dados.status} • Valor: R$ ${formatarValorBR(dados.valor)} • ${dados.data}`;
+        }
+    } catch (erro) {
+        if (statusEl) statusEl.textContent = 'Erro ao consultar status. Tente novamente.';
+    }
+}
+
 function abrirHistorico() {
     vibrar();
     const lista = $('#lista-historico').empty();
